@@ -1,6 +1,8 @@
-# netdisk
+# netdiskd
 
 A SAN-like remote block device server/client for Linux in C/C++.
+
+**STATUS:** This is a rewrite of the netdiskd server from [netdisk](https://github.com/tomdionysus/netdisk) in C++ and is **a pre-alpha WIP**.
 
 ## Goals
 
