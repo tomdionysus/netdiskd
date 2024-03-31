@@ -15,52 +15,48 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 // 02110-1301, USA.
 //
-#include <iostream>
-#include <iomanip>
-#include <sstream>
-#include <chrono>
-
 #include "logger_stdio.h"
+
+#include <chrono>
+#include <iomanip>
+#include <iostream>
+#include <sstream>
 
 namespace netdisk {
 
-LoggerStdIO::LoggerStdIO(LogLevel log_level) {
-	_log_level = log_level;
-}
+LoggerStdIO::LoggerStdIO(LogLevel log_level) { _log_level = log_level; }
 
 void LoggerStdIO::debug(std::string log) {
-    if(_log_level>LogLevel::DEBUG) return;
-	std::cout << _getDateTime() << " [DEBUG] " << log << std::endl;
+  if (_log_level > LogLevel::DEBUG) return;
+  std::cout << _getDateTime() << " [DEBUG] " << log << std::endl;
 }
 
 void LoggerStdIO::info(std::string log) {
-    if(_log_level>LogLevel::INFO) return;
-	std::cout << _getDateTime() << " [INFO ] " << log << std::endl;
+  if (_log_level > LogLevel::INFO) return;
+  std::cout << _getDateTime() << " [INFO ] " << log << std::endl;
 }
 
 void LoggerStdIO::warn(std::string log) {
-    if(_log_level>LogLevel::WARN) return;
-	std::cout << _getDateTime() << " [WARN ] " << log << std::endl;
+  if (_log_level > LogLevel::WARN) return;
+  std::cout << _getDateTime() << " [WARN ] " << log << std::endl;
 }
 
-void LoggerStdIO::error(std::string log) {
-	std::cout << _getDateTime() << " [ERROR] " << log << std::endl;
-}
+void LoggerStdIO::error(std::string log) { std::cout << _getDateTime() << " [ERROR] " << log << std::endl; }
 
 std::string LoggerStdIO::_getDateTime() {
-    // Get current time as time_point
-    auto now = std::chrono::system_clock::now();
-    // Convert to a time_t
-    auto now_c = std::chrono::system_clock::to_time_t(now);
-    // Convert to tm struct in UTC
-    std::tm now_tm = *std::gmtime(&now_c);
+  // Get current time as time_point
+  auto now = std::chrono::system_clock::now();
+  // Convert to a time_t
+  auto now_c = std::chrono::system_clock::to_time_t(now);
+  // Convert to tm struct in UTC
+  std::tm now_tm = *std::gmtime(&now_c);
 
-    std::ostringstream oss;
-    oss << std::put_time(&now_tm, "%Y-%m-%dT%H:%M:%SZ");
-    return oss.str();
+  std::ostringstream oss;
+  oss << std::put_time(&now_tm, "%Y-%m-%dT%H:%M:%SZ");
+  return oss.str();
 }
 
-}
+}  // namespace netdisk

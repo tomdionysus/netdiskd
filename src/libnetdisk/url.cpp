@@ -1,0 +1,99 @@
+//
+// netdisk
+//
+// Copyright (C) 2024 Tom Cully
+//
+// This program is free software; you can redistribute it and/or
+// modify it under the terms of the GNU General Public License
+// as published by the Free Software Foundation; either version 2
+// of the License, or (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program; if not, write to the Free Software
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+// 02110-1301, USA.
+//
+#include "url.h"
+
+#include <limits>
+
+namespace netdisk {
+
+URL::URL() = default;
+
+URL::URL(const std::string& url) { parse(url); }
+
+void URL::parse(const std::string& url) {
+  // Updated pattern to capture optional user and password
+  boost::regex pattern(R"(^([a-zA-Z][a-zA-Z0-9+.-]*):\/\/(?:([^:\/?#]*):?([^@\/?#]*)@)?([^:\/?#]+)(?::(\d+))?([^?#]*)(?:\?([^#]*))?(?:#(.*))?$)");
+  boost::smatch matches;
+
+  if (boost::regex_match(url, matches, pattern)) {
+    try {
+      scheme = matches[1];
+      user = matches[2].matched ? std::optional<std::string>{matches[2]} : std::nullopt;
+      password = matches[3].matched ? std::optional<std::string>{matches[3]} : std::nullopt;
+      host = matches[4];
+
+      if (matches[5].length() == 0) {
+        port = std::nullopt;
+      } else {
+        int _port = std::stoi(matches[5]);
+        if (_port < 0 || _port > std::numeric_limits<uint16_t>::max()) {
+          throw std::out_of_range("The value is out of the range for uint16_t.");
+        }
+        port = static_cast<uint16_t>(_port);
+      }
+
+      path = matches[6];
+      query = matches[7];
+      fragment = matches[8];
+      _valid = true;
+    } catch (const std::exception& e) {
+      _valid = false;
+    }
+  } else {
+    _valid = false;
+  }
+}
+
+std::string URL::to_string() const {
+  std::string url = scheme + "://";
+  if (user.has_value()) {
+    url += user.value();
+    if (password.has_value()) {
+      url += ":" + password.value();
+    }
+    url += "@";
+  }
+  url += host;
+  if (port.has_value()) {
+    url += ":" + std::to_string(port.value());
+  }
+  url += path;
+  if (!query.empty()) {
+    url += "?" + query;
+  }
+  if (!fragment.empty()) {
+    url += "#" + fragment;
+  }
+  return url;
+}
+
+bool URL::is_valid() { return _valid; }
+
+bool operator==(const URL& lhs, const URL& rhs) {
+  return lhs.scheme == rhs.scheme && lhs.user == rhs.user && lhs.password == rhs.password && lhs.host == rhs.host && lhs.port == rhs.port &&
+         lhs.path == rhs.path && lhs.query == rhs.query && lhs.fragment == rhs.fragment;
+}
+
+std::string operator+(const URL& url, const std::string& str) { return url.to_string() + str; }
+
+std::string operator+(const std::string& str, const URL& url) { return str + url.to_string(); }
+
+}  // namespace netdisk

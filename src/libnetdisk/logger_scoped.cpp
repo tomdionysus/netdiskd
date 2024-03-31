@@ -15,33 +15,26 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with this program; if not, write to the Free Software
-// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 
+// Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 // 02110-1301, USA.
 //
-#include "logger.h"
 #include "logger_scoped.h"
+
+#include "logger.h"
 
 namespace netdisk {
 
 LoggerScoped::LoggerScoped(std::string scope, Logger *logger) {
-	_scope = scope;
-	_logger = logger;
+  _scope = scope;
+  _logger = logger;
 }
 
-void LoggerScoped::debug(std::string str) {
-	_logger->debug("("+_scope+") "+str);
-}
+void LoggerScoped::debug(std::string str) { _logger->debug("(" + _scope + ") " + str); }
 
-void LoggerScoped::info(std::string str) {
-	_logger->info("("+_scope+") "+str);
-}
+void LoggerScoped::info(std::string str) { _logger->info("(" + _scope + ") " + str); }
 
-void LoggerScoped::warn(std::string str) {
-	_logger->warn("("+_scope+") "+str);
-}
+void LoggerScoped::warn(std::string str) { _logger->warn("(" + _scope + ") " + str); }
 
-void LoggerScoped::error(std::string str) {
-	_logger->error("("+_scope+") "+str);
-}
+void LoggerScoped::error(std::string str) { _logger->error("(" + _scope + ") " + str); }
 
-}
+}  // namespace netdisk

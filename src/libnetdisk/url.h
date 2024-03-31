@@ -18,31 +18,41 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 // 02110-1301, USA.
 //
-#include "version.h"
+#pragma once
 
-#include <sstream>
+#include <boost/regex.hpp>
+#include <cstdint>
+#include <iostream>
+#include <optional>
 #include <string>
 
 namespace netdisk {
 
-netdisk_version_t Version::getVersion() {
-  netdisk_version_t thisVersion;
-  thisVersion.major = NETDISK_MAJOR_VERSION;
-  thisVersion.minor = NETDISK_MINOR_VERSION;
-  thisVersion.patch = NETDISK_PATCH_VERSION;
+class URL {
+ public:
+  std::string scheme;
+  std::optional<std::string> user;
+  std::optional<std::string> password;
+  std::string host;
+  std::optional<uint16_t> port;
+  std::string path;
+  std::string query;
+  std::string fragment;
 
-  return thisVersion;
-}
+  URL();
+  URL(const std::string& url);
 
-std::string Version::getVersionString() {
-  netdisk_version_t thisVersion = Version::getVersion();
-  return Version::getVersionString(thisVersion);
-}
+  void parse(const std::string& url);
+  std::string to_string() const;
+  bool is_valid();
 
-std::string Version::getVersionString(netdisk_version_t version) {
-  std::ostringstream versionString;
-  versionString << (uint32_t)version.major << "." << (uint32_t)version.minor << "." << (uint32_t)version.patch;
-  return versionString.str();
-}
+  friend bool operator==(const URL& lhs, const URL& rhs);
+
+  friend std::string operator+(const URL& url, const std::string& str);
+  friend std::string operator+(const std::string& str, const URL& url);
+
+ private:
+  bool _valid{false};
+};
 
 }  // namespace netdisk
