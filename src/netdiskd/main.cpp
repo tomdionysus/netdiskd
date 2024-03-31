@@ -19,12 +19,14 @@
 // 02110-1301, USA.
 //
 #include <boost/program_options.hpp>
+#include <boost/asio/signal_set.hpp>
 #include <iostream>
 #include <optional>
 #include <string>
 
 #include "logger_scoped.h"
 #include "logger_stdio.h"
+#include "tcp_server.h"
 #include "url.h"
 #include "version.h"
 
@@ -98,6 +100,26 @@ int main(int argc, char* argv[]) {
       }
       return 1;
     }
+
+    // Create the TcpServer instance with the logger and start it on the specified port
+    TcpServer server(serverLogger, 26547);
+
+    // Wait for SIGINT
+    boost::asio::io_context io_context;
+    boost::asio::signal_set signals(io_context, SIGINT);
+    signals.async_wait([&](const boost::system::error_code& error, int signal_number) {
+        if (!error) {
+            mainLogger.debug("SIGINT received");
+            server.stop();
+        }
+    });
+
+
+    // Start TCP server
+    server.start();
+
+    // Do the SIGINT Wait
+    io_context.run();
 
   } catch (const po::error& e) {
     std::cerr << "Error: " << e.what() << std::endl;

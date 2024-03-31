@@ -1,5 +1,5 @@
 //
-// netdisk_tests
+// netdisk
 //
 // Copyright (C) 2024 Tom Cully
 //
@@ -18,10 +18,37 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 // 02110-1301, USA.
 //
-#include <gtest/gtest.h>
+#pragma once
 
-// Main function for the test program
-int main(int argc, char **argv) {
-  ::testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
-}
+#include <boost/asio.hpp>
+#include <boost/bind/bind.hpp>
+#include <memory>
+#include <thread>
+#include <unordered_map>
+
+#include "logger.h"
+
+namespace netdisk {
+
+class TcpServer {
+ public:
+  TcpServer(Logger& logger, short port);
+
+  void start();
+  void stop();
+
+ private:
+  void _handle_accept(const boost::system::error_code& error, std::shared_ptr<boost::asio::ip::tcp::socket> new_connection);
+  void start_accept();
+
+  boost::asio::io_context _io_context;
+  boost::asio::ip::tcp::acceptor _acceptor;
+  std::unordered_map<int, std::shared_ptr<boost::asio::ip::tcp::socket>> connections_;
+  int next_connection_id_ = 0;
+  uint16_t _port;
+  std::thread _thread;
+
+  Logger& _logger;
+};
+
+}  // namespace netdisk
