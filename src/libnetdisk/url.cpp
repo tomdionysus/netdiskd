@@ -93,7 +93,7 @@ std::string URL::to_string() const {
     std::transform(schemeLower.begin(), schemeLower.end(), schemeLower.begin(), [](unsigned char c) { return std::tolower(c); });
 
     auto it = defaultPorts.find(schemeLower);
-    if (it != defaultPorts.end()) &&(it->second == port.value()) {
+    if ((it != defaultPorts.end()) && (it->second != port.value())) {
         // Add port only if it's not the default port for the scheme
         url += ":" + std::to_string(port.value());
       }
@@ -119,6 +119,39 @@ std::string operator+(const URL& url, const std::string& str) { return url.to_st
 
 std::string operator+(const std::string& str, const URL& url) { return str + url.to_string(); }
 
-const std::map<std::string, uint16_t> URL::defaultPorts = {{"http", 80}, {"https", 443}, {"ftp", 21}, {"mysql", 3306}, {"postgresql", 5432}};
+const std::map<std::string, uint16_t> URL::defaultPorts = {
+    {"http", 80},
+    {"https", 443},
+    {"ftp", 21},
+    {"mysql", 3306},
+    {"postgresql", 5432},
+    {"ssh", 22},
+    {"telnet", 23},
+    {"smtp", 25},
+    {"dns", 53},
+    {"http-alt", 8080}, // Alternative HTTP port
+    {"https-alt", 8443}, // Alternative HTTPS port
+    {"pop3", 110},
+    {"imap", 143},
+    {"ldap", 389},
+    {"sftp", 22}, // SFTP shares port with SSH
+    {"snmp", 161},
+    {"smtps", 465}, // SMTP over SSL
+    {"imaps", 993}, // IMAP over SSL
+    {"pop3s", 995}, // POP3 over SSL
+    {"redis", 6379},
+    {"mongodb", 27017},
+    {"cassandra", 9042},
+    {"memcached", 11211},
+    {"rabbitmq", 5672},
+    {"mqtt", 1883},
+    {"coap", 5683},
+    {"amqp", 5671}, // AMQP over TLS
+    {"rsync", 873},
+    {"rdp", 3389},
+    {"elasticsearch", 9200},
+    {"kibana", 5601},
+    {"zookeeper", 2181}
+};
 
 }  // namespace netdisk
