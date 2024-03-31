@@ -29,20 +29,34 @@ URL::URL() = default;
 URL::URL(const std::string& url) { parse(url); }
 
 void URL::parse(const std::string& url) {
-  // Updated pattern to capture optional user and password
+  // USe boost regex to parse the URL
   boost::regex pattern(R"(^([a-zA-Z][a-zA-Z0-9+.-]*):\/\/(?:([^:\/?#]*):?([^@\/?#]*)@)?([^:\/?#]+)(?::(\d+))?([^?#]*)(?:\?([^#]*))?(?:#(.*))?$)");
   boost::smatch matches;
 
+  // Default is invalid
+  _valid = false;
+
+  // If the URL matches
   if (boost::regex_match(url, matches, pattern)) {
     try {
       scheme = matches[1];
+
+      // User/Password is optional
       user = matches[2].matched ? std::optional<std::string>{matches[2]} : std::nullopt;
       password = matches[3].matched ? std::optional<std::string>{matches[3]} : std::nullopt;
       host = matches[4];
 
+      // Port is also optional
       if (matches[5].length() == 0) {
-        port = std::nullopt;
+        // If it isn't explicitly set, attempt to infer it from the scheme
+        auto it = defaultPorts.find(scheme);
+        if (it != defaultPorts.end()) {
+          port = it->second;
+        } else {
+          port = std::nullopt;
+        }
       } else {
+        // If it is explicitly set check range
         int _port = std::stoi(matches[5]);
         if (_port < 0 || _port > std::numeric_limits<uint16_t>::max()) {
           throw std::out_of_range("The value is out of the range for uint16_t.");
@@ -53,12 +67,12 @@ void URL::parse(const std::string& url) {
       path = matches[6];
       query = matches[7];
       fragment = matches[8];
+
+      // If we reaach here the URL is valid.
       _valid = true;
     } catch (const std::exception& e) {
-      _valid = false;
+      // Something went wrong. Assume invalid.
     }
-  } else {
-    _valid = false;
   }
 }
 
@@ -72,8 +86,17 @@ std::string URL::to_string() const {
     url += "@";
   }
   url += host;
+  // Only add the port if it's not the default port for the scheme
   if (port.has_value()) {
-    url += ":" + std::to_string(port.value());
+    // Convert the scheme to lowercase to match the keys in defaultPorts map
+    std::string schemeLower = scheme;
+    std::transform(schemeLower.begin(), schemeLower.end(), schemeLower.begin(), [](unsigned char c) { return std::tolower(c); });
+
+    auto it = defaultPorts.find(schemeLower);
+    if (it != defaultPorts.end()) &&(it->second == port.value()) {
+        // Add port only if it's not the default port for the scheme
+        url += ":" + std::to_string(port.value());
+      }
   }
   url += path;
   if (!query.empty()) {
@@ -95,5 +118,7 @@ bool operator==(const URL& lhs, const URL& rhs) {
 std::string operator+(const URL& url, const std::string& str) { return url.to_string() + str; }
 
 std::string operator+(const std::string& str, const URL& url) { return str + url.to_string(); }
+
+const std::map<std::string, uint16_t> URL::defaultPorts = {{"http", 80}, {"https", 443}, {"ftp", 21}, {"mysql", 3306}, {"postgresql", 5432}};
 
 }  // namespace netdisk

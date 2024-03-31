@@ -81,6 +81,7 @@ int main(int argc, char* argv[]) {
         serverLogger.info("path = " + dbUrl.path);
         serverLogger.info("query = " + dbUrl.query);
         serverLogger.info("fragment = " + dbUrl.fragment);
+        serverLogger.info("URL = " + dbUrl);
       } else {
         serverLogger.warn("db_url is not a valid URL");
       }

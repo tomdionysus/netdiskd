@@ -53,6 +53,8 @@ class URL {
 
  private:
   bool _valid{false};
+
+  static const std::map<std::string, uint16_t> defaultPorts;
 };
 
 }  // namespace netdisk
