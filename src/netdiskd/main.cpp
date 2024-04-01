@@ -18,12 +18,12 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 // 02110-1301, USA.
 //
-#include <boost/program_options.hpp>
 #include <boost/asio/signal_set.hpp>
 #include <iostream>
 #include <optional>
 #include <string>
 
+#include "config.h"
 #include "logger_scoped.h"
 #include "logger_stdio.h"
 #include "tcp_server.h"
@@ -32,100 +32,40 @@
 
 using namespace std;
 using namespace netdisk;
-namespace po = boost::program_options;
 
 int main(int argc, char* argv[]) {
   LoggerStdIO mainLogger(LogLevel::DEBUG);
 
+  LoggerScoped configLogger("config", &mainLogger);
   LoggerScoped serverLogger("server", &mainLogger);
 
   mainLogger.info("-----------------------------------");
   mainLogger.info("netdiskd v" + Version::getVersionString());
   mainLogger.info("-----------------------------------");
 
-  try {
-    po::options_description desc("Allowed options");
-    desc.add_options()("help,h", "Help")("db_url", po::value<std::string>(), "A Database URL (mysql://user:password@host/database, etc)");
+  Config config(configLogger, argc, argv);
 
-    po::variables_map vm;
-
-    // Create a command line parser that applies the 'desc' options
-    po::command_line_parser parser(argc, argv);
-    parser.options(desc).allow_unregistered();  // Allow unknown options
-    po::parsed_options parsed_options = parser.run();
-
-    // Store and notify parsed options
-    po::store(parsed_options, vm);
-    po::notify(vm);
-
-    if (vm.count("help")) {
-      std::cout << desc << std::endl;
-      return 1;
-    }
-
-    // Process options
-    if (vm.count("db_url")) {
-      std::string db_url = vm["db_url"].as<std::string>();
-      URL dbUrl(db_url);
-
-      if (dbUrl.is_valid()) {
-        serverLogger.info("scheme = " + dbUrl.scheme);
-        if (dbUrl.user) {
-          serverLogger.info("user = " + dbUrl.user.value());
-        }
-        if (dbUrl.password) {
-          serverLogger.info("password = " + dbUrl.password.value());
-        }
-        serverLogger.info("host = " + dbUrl.host);
-        if (dbUrl.port) {
-          serverLogger.info("port = " + std::to_string(dbUrl.port.value()));
-        }
-        serverLogger.info("path = " + dbUrl.path);
-        serverLogger.info("query = " + dbUrl.query);
-        serverLogger.info("fragment = " + dbUrl.fragment);
-        serverLogger.info("URL = " + dbUrl);
-      } else {
-        serverLogger.warn("db_url is not a valid URL");
-      }
-    }
-
-    // Collect all unrecognized options from the parsed information
-    std::vector<std::string> unrecognized_opts = po::collect_unrecognized(parsed_options.options, po::include_positional);
-
-    // Handle or display unrecognized options
-    if (!unrecognized_opts.empty()) {
-      mainLogger.error("Unrecognized options:");
-      for (const auto& opt : unrecognized_opts) {
-        mainLogger.error(opt);
-      }
-      return 1;
-    }
-
-    // Create the TcpServer instance with the logger and start it on the specified port
-    TcpServer server(serverLogger, 26547);
-
-    // Wait for SIGINT
-    boost::asio::io_context io_context;
-    boost::asio::signal_set signals(io_context, SIGINT);
-    signals.async_wait([&](const boost::system::error_code& error, int signal_number) {
-        if (!error) {
-            mainLogger.debug("SIGINT received");
-            server.stop();
-        }
-    });
-
-
-    // Start TCP server
-    server.start();
-
-    // Do the SIGINT Wait
-    io_context.run();
-
-  } catch (const po::error& e) {
-    std::cerr << "Error: " << e.what() << std::endl;
-    return 2;
-  } catch (const std::exception& e) {
-    std::cerr << "Unhandled Exception reached the top of main: " << e.what() << ", application will now exit" << std::endl;
+  if (!config.is_valid()) {
+    mainLogger.error("Invalid Configuration");
     return 99;
   }
+
+  // Create the TcpServer instance with the logger and start it on the specified port
+  TcpServer server(serverLogger, 26547);
+
+  // Wait for SIGINT
+  boost::asio::io_context signal_wait_context;
+  boost::asio::signal_set signals(signal_wait_context, SIGINT);
+
+  signals.async_wait([&](const boost::system::error_code& error, int signal_number) {
+    if (!error) {
+      mainLogger.debug("SIGINT received");
+      server.stop();
+    }
+  });
+  // Start TCP server
+  server.start();
+
+  // Do the SIGINT Wait
+  signal_wait_context.run();
 }

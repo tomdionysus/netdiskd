@@ -20,19 +20,35 @@
 //
 #pragma once
 
+#include <boost/program_options.hpp>
+#include <cstdint>
 #include <string>
+
+#include "logger.h"
+#include "url.h"
 
 namespace netdisk {
 
-enum LogLevel { DEBUG = 0, INFO = 1, WARN = 2, ERROR = 3 };
+enum DBMode { FILE, MYSQL, POSTGRESQL };
 
-class Logger {
+class Config {
  public:
-  virtual ~Logger() {}
-  virtual void debug(std::string log) = 0;
-  virtual void info(std::string log) = 0;
-  virtual void warn(std::string log) = 0;
-  virtual void error(std::string log) = 0;
+  DBMode dbMode;
+  std::shared_ptr<URL> dbUrl;
+  uint16_t port;
+
+  Config(Logger& logger);
+  Config(Logger& logger, int argc, char* argv[]);
+
+  void parse_cmd_line(int argc, char* argv[]);
+  bool is_valid();
+
+ private:
+  Logger& _logger;
+
+  bool _valid;
+
+  static const std::map<std::string, uint16_t> defaultPorts;
 };
 
 }  // namespace netdisk

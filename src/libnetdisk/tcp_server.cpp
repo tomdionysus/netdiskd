@@ -18,9 +18,10 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 // 02110-1301, USA.
 //
+#include "tcp_server.h"
+
 #include <iostream>
 
-#include "tcp_server.h"
 #include "logger.h"
 
 namespace netdisk {
@@ -33,18 +34,18 @@ TcpServer::TcpServer(Logger& logger, short port)
 }
 
 void TcpServer::start() {
-    _logger.debug("Starting...");
-    _thread = std::thread([this]() { _io_context.run(); });
-    _logger.info("Listening on TCP " + std::to_string(_port));
+  _logger.debug("Starting...");
+  _thread = std::thread([this]() { _io_context.run(); });
+  _logger.info("Listening on TCP " + std::to_string(_port));
 }
 
 void TcpServer::stop() {
-    _logger.debug("Stopping...");
-    _io_context.stop();
-    if (_thread.joinable()) {
-        _thread.join();
-    }
-    _logger.info("Stopped");
+  _logger.debug("Stopping...");
+  _io_context.stop();
+  if (_thread.joinable()) {
+    _thread.join();
+  }
+  _logger.info("Stopped");
 }
 
 void TcpServer::start_accept() {

@@ -66,15 +66,17 @@ find_package(Threads REQUIRED)
 
 # libnetdisk library
 add_library(netdisk SHARED ${libnetdisk_SOURCES})
+target_link_libraries(netdisk
+    Threads::Threads
+    Boost::program_options
+    ${MYSQL_LIBRARY}
+)
 install(TARGETS netdisk LIBRARY DESTINATION lib)
 
 # netdiskd executable
 add_executable(netdiskd ${netdiskd_SOURCES})
 target_link_libraries(netdiskd
     netdisk
-    Threads::Threads
-    Boost::program_options
-    ${MYSQL_LIBRARY}
 )
 install(TARGETS netdiskd DESTINATION bin)
 
