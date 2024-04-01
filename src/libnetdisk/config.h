@@ -34,7 +34,7 @@ enum DBMode { FILE, MYSQL, POSTGRESQL };
 class Config {
  public:
   DBMode dbMode;
-  std::shared_ptr<URL> dbUrl;
+  URL dbUrl;
   uint16_t port;
 
   Config(Logger& logger);

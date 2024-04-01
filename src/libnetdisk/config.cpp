@@ -35,8 +35,8 @@ void Config::parse_cmd_line(int argc, char* argv[]) {
 
   try {
     po::options_description desc("Allowed options");
-    desc.add_options()("help,h", "Help")("db_mode", "Device Database Mode (mysql)")("db_url", po::value<std::string>(),
-                                                                                    "A Database URL (mysql://user:password@host/database, etc)");
+    desc.add_options()("help,h", "Help")("db_mode", "Device Database Mode (file, mysql, postgresql)")(
+        "db_url", po::value<std::string>(), "A Database URL (mysql://user:password@host/database, etc)");
 
     po::variables_map vm;
 
@@ -56,25 +56,23 @@ void Config::parse_cmd_line(int argc, char* argv[]) {
 
     // Process options
     if (vm.count("db_url")) {
-      std::string db_url = vm["db_url"].as<std::string>();
-      URL dbUrl(db_url);
+      dbUrl.parse(vm["db_url"].as<std::string>());
 
       if (dbUrl.is_valid()) {
-        _logger.debug("scheme = " + dbUrl.scheme);
+        _logger.debug("db_url.scheme = " + dbUrl.scheme);
         if (dbUrl.user) {
-          _logger.debug("user = " + dbUrl.user.value());
+          _logger.debug("db_url.user = " + dbUrl.user.value());
         }
         if (dbUrl.password) {
-          _logger.debug("password = " + dbUrl.password.value());
+          _logger.debug("db_url.password = " + dbUrl.password.value());
         }
-        _logger.debug("host = " + dbUrl.host);
+        _logger.debug("db_url.host = " + dbUrl.host);
         if (dbUrl.port) {
-          _logger.debug("port = " + std::to_string(dbUrl.port.value()));
+          _logger.debug("db_url.port = " + std::to_string(dbUrl.port.value()));
         }
-        _logger.debug("path = " + dbUrl.path);
-        _logger.debug("query = " + dbUrl.query);
-        _logger.debug("fragment = " + dbUrl.fragment);
-        _logger.debug("URL = " + dbUrl);
+        _logger.debug("db_url.path = " + dbUrl.path);
+        _logger.debug("db_url.query = " + dbUrl.query);
+        _logger.debug("db_url.fragment = " + dbUrl.fragment);
       } else {
         _logger.warn("db_url is not a valid URL");
         _valid = false;

@@ -24,11 +24,13 @@
 #include <string>
 
 #include "config.h"
+#include "device_db_mysql.h"
 #include "logger_scoped.h"
 #include "logger_stdio.h"
 #include "tcp_server.h"
 #include "url.h"
 #include "version.h"
+#include "device_db_mysql.h"
 
 using namespace std;
 using namespace netdisk;
@@ -38,6 +40,7 @@ int main(int argc, char* argv[]) {
 
   LoggerScoped configLogger("config", &mainLogger);
   LoggerScoped serverLogger("server", &mainLogger);
+  LoggerScoped devicedbLogger("devicedb", &mainLogger);
 
   mainLogger.info("-----------------------------------");
   mainLogger.info("netdiskd v" + Version::getVersionString());
@@ -50,6 +53,12 @@ int main(int argc, char* argv[]) {
     return 99;
   }
 
+  DeviceDBMySQL ddMysql(devicedbLogger, config.dbUrl);
+  DeviceDB& deviceDb = ddMysql;
+
+  // Create the device database
+  deviceDb.initialise();
+
   // Create the TcpServer instance with the logger and start it on the specified port
   TcpServer server(serverLogger, 26547);
 
@@ -61,6 +70,7 @@ int main(int argc, char* argv[]) {
     if (!error) {
       mainLogger.debug("SIGINT received");
       server.stop();
+      deviceDb.close();
     }
   });
   // Start TCP server

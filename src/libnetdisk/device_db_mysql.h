@@ -1,5 +1,5 @@
 //
-// netdiskd
+// netdisk
 //
 // Copyright (C) 2024 Tom Cully
 //
@@ -18,20 +18,34 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 // 02110-1301, USA.
 //
-#include "logger_scoped.h"
+#pragma once
 
+#include <mysql/mysql.h>
+
+#include <iostream>
+#include <string>
+#include <vector>
+
+#include "device_db.h"
 #include "logger.h"
+#include "url.h"
 
 namespace netdisk {
 
-LoggerScoped::LoggerScoped(std::string scope, Logger *logger) : _scope(scope), _logger(logger) {}
+class DeviceDBMySQL : public DeviceDB {
+ public:
+  DeviceDBMySQL(Logger& logger, URL& dbUrl);
 
-void LoggerScoped::debug(std::string str) { _logger->debug("(" + _scope + ") " + str); }
+  virtual bool initialise();
+  virtual std::shared_ptr<Host> get_host(uint64_t host_id);
+  virtual std::shared_ptr<Device> get_device(uint64_t device_id);
+  virtual std::vector<std::shared_ptr<Device>> get_host_devices(uint64_t host_id);
+  virtual bool close();
 
-void LoggerScoped::info(std::string str) { _logger->info("(" + _scope + ") " + str); }
-
-void LoggerScoped::warn(std::string str) { _logger->warn("(" + _scope + ") " + str); }
-
-void LoggerScoped::error(std::string str) { _logger->error("(" + _scope + ") " + str); }
+ private:
+  Logger& _logger;
+  URL _dbUrl;
+  struct MYSQL* conn = nullptr;
+};
 
 }  // namespace netdisk
