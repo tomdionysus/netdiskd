@@ -30,9 +30,8 @@ Config::Config(Logger& logger) : _logger(logger) {}
 Config::Config(Logger& logger, int argc, char* argv[]) : _logger(logger) { parse_cmd_line(argc, argv); }
 
 void Config::parse_cmd_line(int argc, char* argv[]) {
-  _valid = false;
-
   _logger.debug("Parsing command line...");
+  _valid = true;
 
   try {
     po::options_description desc("Allowed options");
@@ -61,23 +60,24 @@ void Config::parse_cmd_line(int argc, char* argv[]) {
       URL dbUrl(db_url);
 
       if (dbUrl.is_valid()) {
-        _logger.info("scheme = " + dbUrl.scheme);
+        _logger.debug("scheme = " + dbUrl.scheme);
         if (dbUrl.user) {
-          _logger.info("user = " + dbUrl.user.value());
+          _logger.debug("user = " + dbUrl.user.value());
         }
         if (dbUrl.password) {
-          _logger.info("password = " + dbUrl.password.value());
+          _logger.debug("password = " + dbUrl.password.value());
         }
-        _logger.info("host = " + dbUrl.host);
+        _logger.debug("host = " + dbUrl.host);
         if (dbUrl.port) {
-          _logger.info("port = " + std::to_string(dbUrl.port.value()));
+          _logger.debug("port = " + std::to_string(dbUrl.port.value()));
         }
-        _logger.info("path = " + dbUrl.path);
-        _logger.info("query = " + dbUrl.query);
-        _logger.info("fragment = " + dbUrl.fragment);
-        _logger.info("URL = " + dbUrl);
+        _logger.debug("path = " + dbUrl.path);
+        _logger.debug("query = " + dbUrl.query);
+        _logger.debug("fragment = " + dbUrl.fragment);
+        _logger.debug("URL = " + dbUrl);
       } else {
         _logger.warn("db_url is not a valid URL");
+        _valid = false;
       }
     }
 
@@ -90,14 +90,12 @@ void Config::parse_cmd_line(int argc, char* argv[]) {
       for (const auto& opt : unrecognized_opts) {
         _logger.error(opt);
       }
-      return;
+      _valid = false;
     }
-
-    _valid = true;
 
   } catch (const po::error& e) {
     _logger.error("Error: " + std::string(e.what()));
-    return;
+    _valid = false;
   }
 }
 
