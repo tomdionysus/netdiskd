@@ -26,7 +26,7 @@
 
 namespace netdisk {
 
-#define AES_KEY_SIZE 16
+#define AES_KEY_SIZE 32
 
 typedef uint8_t aes_key_t[AES_KEY_SIZE];
 
@@ -34,7 +34,7 @@ class Host {
 public:
   uint64_t id;
   std::string name;
-  aes_key_t key;
+  aes_key_t aes_key;
   std::vector<uint64_t> devices;
 };
 
@@ -53,7 +53,7 @@ class DeviceDB {
   virtual bool initialise() = 0;
   virtual std::shared_ptr<Host> get_host(uint64_t host_id) = 0;
   virtual std::shared_ptr<Device> get_device(uint64_t device_id) = 0;
-  virtual std::vector<std::shared_ptr<Device>> get_host_devices(uint64_t host_id) = 0;
+  virtual std::vector<Device> get_host_devices(uint64_t host_id) = 0;
   virtual bool close() = 0;
 };
 

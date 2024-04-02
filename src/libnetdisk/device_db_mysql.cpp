@@ -24,6 +24,7 @@
 
 #include <iostream>
 #include <string>
+#include <cstring>
 
 #include "url.h"
 
@@ -57,37 +58,54 @@ bool DeviceDBMySQL::initialise() {
 }
 
 std::shared_ptr<Host> DeviceDBMySQL::get_host(uint64_t host_id) {
-  if (mysql_query(conn, "SELECT * FROM host")) {
+  if (mysql_query(conn, "SELECT id, name, aes_key FROM host")) {
     _logger.error("Query failed: " + std::string(mysql_error(conn)));
     return NULL;
   }
 
   MYSQL_RES* result = mysql_store_result(conn);
   if (!result) {
-    _logger.error("Bad Result Set: " + std::string(mysql_error(conn)));
+    _logger.error("Query host: Bad Result Set: " + std::string(mysql_error(conn)));
     return NULL;
   }
 
   int num_fields = mysql_num_fields(result);
   MYSQL_ROW row;
 
-  while ((row = mysql_fetch_row(result))) {
-    for (int i = 0; i < num_fields; i++) {
-      std::cout << (row[i] ? row[i] : "NULL") << " ";
-    }
-    std::cout << std::endl;
+  if (num_fields!=3) {
+    _logger.error("Query host: Expected 3 fields, got "+std::to_string(num_fields));
+    mysql_free_result(result);
+    return NULL;
   }
 
+  std::shared_ptr<Host> host = std::make_shared<Host>();
+
+  row = mysql_fetch_row(result);
+  host->id = std::stoll(std::string(row[0]));
+  host->name = std::string(row[1]);
+
+  if (row[2]) { // Make sure the field is not NULL
+    unsigned long* lengths = mysql_fetch_lengths(result);
+    if (lengths[2] == 32) { // Ensure the binary data is exactly 32 bytes
+      std::memcpy(host->aes_key, row[2], 32);
+    } else {
+      _logger.error("AES key length mismatch. Expected 32 bytes.");
+    }
+  } else {
+    _logger.error("AES key is NULL.");
+  }
+
+
   mysql_free_result(result);
-  return NULL;
+  return host;
 }
 
 std::shared_ptr<Device> DeviceDBMySQL::get_device(uint64_t device_id) {
     return NULL;
 }
 
-std::vector<std::shared_ptr<Device>> DeviceDBMySQL::get_host_devices(uint64_t host_id) {
-    return std::vector<std::shared_ptr<Device>>();
+std::vector<Device> DeviceDBMySQL::get_host_devices(uint64_t host_id) {
+    return std::vector<Device>();
 }
 
 bool DeviceDBMySQL::close() {
@@ -97,6 +115,7 @@ bool DeviceDBMySQL::close() {
     conn = nullptr;
   }
   _logger.info("Closed");
+  return true;
 }
 
 }  // namespace netdisk

@@ -18,34 +18,31 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 // 02110-1301, USA.
 //
-#pragma once
-
-#include <mysql/mysql.h>
-
 #include <iostream>
-#include <string>
 #include <vector>
+#include <sstream>
+#include <iomanip>
 
-#include "device_db.h"
-#include "logger.h"
-#include "url.h"
+#include <util.h>
 
 namespace netdisk {
 
-class DeviceDBMySQL : public DeviceDB {
- public:
-  DeviceDBMySQL(Logger& logger, URL& dbUrl);
+std::string Util::to_hex(const std::vector<uint8_t>& vec) {
+    std::ostringstream oss;
+    for (const auto& num : vec) {
+        oss << std::hex << std::setfill('0') << std::setw(2) << num;
+    }
+    return oss.str();
+}
 
-  virtual bool initialise();
-  virtual std::shared_ptr<Host> get_host(uint64_t host_id);
-  virtual std::shared_ptr<Device> get_device(uint64_t device_id);
-  virtual std::vector<Device> get_host_devices(uint64_t host_id);
-  virtual bool close();
+std::string Util::to_hex(const uint8_t arr[], uint16_t len) {
+    std::ostringstream oss;
+    oss << std::hex << std::setfill('0');
+    for (uint16_t i = 0; i < len; i++) {
+        // Cast to unsigned int to ensure numeric interpretation
+        oss << std::setw(2) << static_cast<unsigned int>(arr[i]);
+    }
+    return oss.str();
+}
 
- private:
-  Logger& _logger;
-  URL _dbUrl;
-  struct MYSQL* conn = nullptr;
-};
-
-}  // namespace netdisk
+}
