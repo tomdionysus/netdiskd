@@ -20,41 +20,24 @@
 //
 #pragma once
 
-#include <iostream>
-#include <string>
-#include <vector>
+#include <cstdint>
+#include <fstream>
 
 namespace netdisk {
 
-#define AES_KEY_SIZE 32
-
-typedef uint8_t aes_key_t[AES_KEY_SIZE];
-
-class Host {
+class Random {
  public:
-  uint64_t id;
-  std::string name;
-  aes_key_t aes_key;
-  std::vector<uint64_t> devices;
-};
+  Random();
+  ~Random();
 
-class Device {
- public:
-  uint64_t id;
-  std::string name;
-  std::string filename;
-  uint32_t block_size;
-  uint64_t block_total;
-  bool read_only;
-};
+  int8_t getInt8();
+  int16_t getInt16();
+  int32_t getInt32();
+  int64_t getInt64();
+  void getRandom(void* ptr, size_t size);
 
-class DeviceDB {
- public:
-  virtual bool initialise() = 0;
-  virtual std::shared_ptr<Host> get_host(uint64_t host_id) = 0;
-  virtual std::shared_ptr<Device> get_device(uint64_t device_id) = 0;
-  virtual std::vector<Device> get_host_devices(uint64_t host_id) = 0;
-  virtual bool close() = 0;
+ private:
+  std::ifstream randFile;
 };
 
 }  // namespace netdisk

@@ -18,31 +18,31 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 // 02110-1301, USA.
 //
-#include <iostream>
-#include <vector>
-#include <sstream>
-#include <iomanip>
-
 #include <util.h>
+
+#include <iomanip>
+#include <iostream>
+#include <sstream>
+#include <vector>
 
 namespace netdisk {
 
 std::string Util::to_hex(const std::vector<uint8_t>& vec) {
-    std::ostringstream oss;
-    for (const auto& num : vec) {
-        oss << std::hex << std::setfill('0') << std::setw(2) << num;
-    }
-    return oss.str();
+  std::ostringstream oss;
+  for (const auto& num : vec) {
+    oss << std::hex << std::setfill('0') << std::setw(2) << num;
+  }
+  return oss.str();
 }
 
 std::string Util::to_hex(const uint8_t arr[], uint16_t len) {
-    std::ostringstream oss;
-    oss << std::hex << std::setfill('0');
-    for (uint16_t i = 0; i < len; i++) {
-        // Cast to unsigned int to ensure numeric interpretation
-        oss << std::setw(2) << static_cast<unsigned int>(arr[i]);
-    }
-    return oss.str();
+  std::ostringstream oss;
+  oss << std::hex << std::setfill('0');
+  for (uint16_t i = 0; i < len; i++) {
+    // Cast to unsigned int to ensure numeric interpretation
+    oss << std::setw(2) << static_cast<unsigned int>(arr[i]);
+  }
+  return oss.str();
 }
 
-}
+}  // namespace netdisk

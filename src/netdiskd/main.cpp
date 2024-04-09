@@ -29,9 +29,8 @@
 #include "logger_stdio.h"
 #include "tcp_server.h"
 #include "url.h"
-#include "version.h"
 #include "util.h"
-#include "device_db_mysql.h"
+#include "version.h"
 
 using namespace std;
 using namespace netdisk;
@@ -79,10 +78,10 @@ int main(int argc, char* argv[]) {
   server.start();
 
   auto host = deviceDb.get_host(27838123);
-  if(host==nullptr) {
+  if (host == nullptr) {
     mainLogger.info("Host not found");
   } else {
-    mainLogger.info("Host ID: "+std::to_string(host->id)+", Name: '"+host->name+"', AES Key: 0x"+Util::to_hex(host->aes_key, AES_KEY_SIZE));
+    mainLogger.info("Host ID: " + std::to_string(host->id) + ", Name: '" + host->name + "', AES Key: 0x" + Util::to_hex(host->aes_key, AES_KEY_SIZE));
   }
 
   // Do the SIGINT Wait
