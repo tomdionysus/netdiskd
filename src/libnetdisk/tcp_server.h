@@ -27,6 +27,7 @@
 #include <unordered_map>
 
 #include "logger.h"
+#include "session.h"
 
 namespace netdisk {
 
@@ -39,12 +40,12 @@ class TcpServer {
   void stop();
 
  private:
-  void _handle_accept(const boost::system::error_code& error, std::shared_ptr<boost::asio::ip::tcp::socket> new_connection);
+  void _handle_accept(const boost::system::error_code &error, std::shared_ptr<boost::asio::ip::tcp::socket> new_connection);
   void start_accept();
 
   boost::asio::io_context _io_context;
   boost::asio::ip::tcp::acceptor _acceptor;
-  std::unordered_map<int, std::shared_ptr<boost::asio::ip::tcp::socket>> connections_;
+  std::unordered_map<int, Session *> _connections;
   int next_connection_id_ = 0;
   uint16_t _port;
   std::thread _thread;

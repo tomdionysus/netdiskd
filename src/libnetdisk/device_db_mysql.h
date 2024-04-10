@@ -34,7 +34,7 @@ namespace netdisk {
 
 class DeviceDBMySQL : public DeviceDB {
  public:
-  DeviceDBMySQL(Logger *logger, URL& dbUrl);
+  DeviceDBMySQL(Logger* logger, URL& dbUrl);
   ~DeviceDBMySQL();
 
   virtual bool initialise();
@@ -44,7 +44,7 @@ class DeviceDBMySQL : public DeviceDB {
   virtual bool close();
 
  private:
-  Logger *_logger;
+  Logger* _logger;
   URL _dbUrl;
   struct MYSQL* conn = nullptr;
 };

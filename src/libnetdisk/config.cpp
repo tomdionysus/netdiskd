@@ -20,24 +20,21 @@
 //
 
 #include "config.h"
+
 #include "logger_scoped.h"
 
 namespace po = boost::program_options;
 
 namespace netdisk {
 
-Config::Config(Logger *logger) {
-  _logger = new LoggerScoped("config",logger);
-}
+Config::Config(Logger* logger) { _logger = new LoggerScoped("config", logger); }
 
-Config::Config(Logger *logger, int argc, char* argv[]) {
-  _logger = new LoggerScoped("config",logger);
+Config::Config(Logger* logger, int argc, char* argv[]) {
+  _logger = new LoggerScoped("config", logger);
   parse_cmd_line(argc, argv);
 }
 
-Config::~Config() {
-  delete _logger;
-}
+Config::~Config() { delete _logger; }
 
 void Config::parse_cmd_line(int argc, char* argv[]) {
   _logger->debug("Parsing command line...");
@@ -45,10 +42,8 @@ void Config::parse_cmd_line(int argc, char* argv[]) {
 
   try {
     po::options_description desc("Allowed options");
-    desc.add_options()
-      ("help,h", "Help")
-      ("db_mode", "Device Database Mode (file, mysql, postgresql)")
-      ("db_url", po::value<std::string>(), "A Database URL (mysql://user:password@host/database, etc)");
+    desc.add_options()("help,h", "Help")("db_mode", "Device Database Mode (file, mysql, postgresql)")(
+        "db_url", po::value<std::string>(), "A Database URL (mysql://user:password@host/database, etc)");
 
     po::variables_map vm;
 

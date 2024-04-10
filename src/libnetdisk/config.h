@@ -38,10 +38,10 @@ class Config {
   uint16_t port;
 
   Config(Logger *logger);
-  Config(Logger *logger, int argc, char* argv[]);
+  Config(Logger *logger, int argc, char *argv[]);
   ~Config();
 
-  void parse_cmd_line(int argc, char* argv[]);
+  void parse_cmd_line(int argc, char *argv[]);
   bool is_valid();
 
  private:

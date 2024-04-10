@@ -26,18 +26,14 @@
 #include <iostream>
 #include <string>
 
-#include "url.h"
 #include "logger_scoped.h"
+#include "url.h"
 
 namespace netdisk {
 
-DeviceDBMySQL::DeviceDBMySQL(Logger *logger, URL& dbUrl) : _dbUrl(dbUrl) {
-  _logger = new LoggerScoped("mysql",logger);
-}
+DeviceDBMySQL::DeviceDBMySQL(Logger* logger, URL& dbUrl) : _dbUrl(dbUrl) { _logger = new LoggerScoped("mysql", logger); }
 
-DeviceDBMySQL::~DeviceDBMySQL() {
-  delete _logger;
-}
+DeviceDBMySQL::~DeviceDBMySQL() { delete _logger; }
 
 bool DeviceDBMySQL::initialise() {
   conn = mysql_init(nullptr);

@@ -20,37 +20,35 @@
 //
 #include "session.h"
 
-#include <iostream>
 #include <functional>
+#include <iostream>
+
+#include "logger_scoped.h"
 
 namespace netdisk {
 
-Session::Session() {
+Session::Session(Logger *logger, std::shared_ptr<boost::asio::ip::tcp::socket> connection) {
   _running = false;
   _thread = nullptr;
+  _connection = connection;
+  auto endpoint = _connection->remote_endpoint();
+  _logger = new LoggerScoped(endpoint.address().to_string() + ":" + std::to_string(endpoint.port()), logger);
+
+  _thread = new std::thread(std::bind(&Session::_execute, this, 0));
 }
 
 Session::~Session() {
-
-}
-
-void Session::initialise() {
-
-}
-
-void Session::start() {
-  if(!_running) {
-    _thread = new std::thread(std::bind(&Session::_execute, this, 0));
-  }
+  stop();
+  delete _logger;
 }
 
 void Session::stop() {
-  if(_running) {
+  if (_running) {
     // Signal Thread
     _running = false;
-    
+
     // Wait for quit
-    if(_thread->joinable()) {
+    if (_thread->joinable()) {
       _thread->join();
     }
   }
@@ -59,12 +57,47 @@ void Session::stop() {
 void Session::_execute(int id) {
   _running = true;
 
-  while(_running) {
+  _logger->info("Connected");
 
+  boost::system::error_code ec;
+
+  while (_running) {
+    ec = _read_with_timeout();
+
+    if (ec) {
+      if (ec == boost::asio::error::operation_aborted) {
+        _running = false;
+      } else {
+        _running = false;
+      }
+    } else {
+      _logger->info("Read Bytes");
+    }
   }
+
+  _logger->info("Closed");
+
+  _connection->close();
 
   _thread = nullptr;
 }
 
+boost::system::error_code Session::_read_with_timeout() {
+  boost::asio::steady_timer timer(_connection->get_executor(), boost::asio::chrono::seconds(10));
+  boost::system::error_code ec;
+
+  timer.async_wait([this](const boost::system::error_code &) {
+    _connection->cancel();  // This will cancel the blocking read operation
+  });
+
+  // Buffer to store data
+  char data[1024];
+  size_t length = _connection->read_some(boost::asio::buffer(data), ec);
+
+  // Cancel the timer if the operation completes before the timeout
+  timer.cancel();
+
+  return ec;
+}
 
 }  // namespace netdisk

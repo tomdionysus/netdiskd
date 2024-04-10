@@ -20,27 +20,34 @@
 //
 #pragma once
 
+#include <atomic>
+#include <boost/asio.hpp>
+#include <boost/bind/bind.hpp>
 #include <cstdint>
 #include <fstream>
 #include <thread>
-#include <atomic>
+
+#include "logger.h"
 
 namespace netdisk {
 
 class Session {
-  public:
-    Session();
-    ~Session();
+ public:
+  Session(Logger *logger, std::shared_ptr<boost::asio::ip::tcp::socket> connection);
+  ~Session();
 
-    void initialise();
-    void start();
-    void stop();
+  void stop();
 
  private:
-    std::thread *_thread;
-    std::atomic<bool> _running;
+  Logger *_logger;
 
-    void _execute(int id);
+  std::thread *_thread;
+  std::atomic<bool> _running;
+
+  std::shared_ptr<boost::asio::ip::tcp::socket> _connection;
+
+  void _execute(int id);
+  boost::system::error_code _read_with_timeout();
 };
 
 }  // namespace netdisk

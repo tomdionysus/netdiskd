@@ -27,17 +27,12 @@
 
 namespace netdisk {
 
-TcpServer::TcpServer(Logger *logger, short port)
-    : 
-      _port(port),
-      _acceptor(_io_context, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)) {
+TcpServer::TcpServer(Logger* logger, short port) : _port(port), _acceptor(_io_context, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)) {
   _logger = new LoggerScoped("server", logger);
   start_accept();
 }
 
-TcpServer::~TcpServer() {
-  delete _logger;
-}
+TcpServer::~TcpServer() { delete _logger; }
 
 void TcpServer::start() {
   _logger->debug("Starting...");
@@ -64,7 +59,8 @@ void TcpServer::_handle_accept(const boost::system::error_code& error, std::shar
   if (!error) {
     // Add the new connection to the map
     int id = next_connection_id_++;
-    connections_[id] = new_connection;
+
+    _connections[id] = new Session(_logger, new_connection);
 
     _logger->info("New Connection #" + std::to_string(id) + " (" + new_connection->remote_endpoint().address().to_string() + ")");
 
