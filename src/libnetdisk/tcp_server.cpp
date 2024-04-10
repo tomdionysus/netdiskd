@@ -22,30 +22,36 @@
 
 #include <iostream>
 
-#include "logger.h"
+#include "logger_scoped.h"
+#include "session.h"
 
 namespace netdisk {
 
-TcpServer::TcpServer(Logger& logger, short port)
-    : _logger(logger),  // Set _logger to logger
+TcpServer::TcpServer(Logger *logger, short port)
+    : 
       _port(port),
       _acceptor(_io_context, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)) {
+  _logger = new LoggerScoped("server", logger);
   start_accept();
 }
 
+TcpServer::~TcpServer() {
+  delete _logger;
+}
+
 void TcpServer::start() {
-  _logger.debug("Starting...");
+  _logger->debug("Starting...");
   _thread = std::thread([this]() { _io_context.run(); });
-  _logger.info("Listening on TCP " + std::to_string(_port));
+  _logger->info("Listening on TCP " + std::to_string(_port));
 }
 
 void TcpServer::stop() {
-  _logger.debug("Stopping...");
+  _logger->debug("Stopping...");
   _io_context.stop();
   if (_thread.joinable()) {
     _thread.join();
   }
-  _logger.info("Stopped");
+  _logger->info("Stopped");
 }
 
 void TcpServer::start_accept() {
@@ -60,12 +66,12 @@ void TcpServer::_handle_accept(const boost::system::error_code& error, std::shar
     int id = next_connection_id_++;
     connections_[id] = new_connection;
 
-    _logger.info("New Connection #" + std::to_string(id) + " (" + new_connection->remote_endpoint().address().to_string() + ")");
+    _logger->info("New Connection #" + std::to_string(id) + " (" + new_connection->remote_endpoint().address().to_string() + ")");
 
     // Start accepting another connection
     start_accept();
   } else {
-    _logger.error("Error accepting new connection");
+    _logger->error("Error accepting new connection");
   }
 }
 

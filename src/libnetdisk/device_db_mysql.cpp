@@ -27,15 +27,22 @@
 #include <string>
 
 #include "url.h"
+#include "logger_scoped.h"
 
 namespace netdisk {
 
-DeviceDBMySQL::DeviceDBMySQL(Logger& logger, URL& dbUrl) : _logger(logger), _dbUrl(dbUrl) {}
+DeviceDBMySQL::DeviceDBMySQL(Logger *logger, URL& dbUrl) : _dbUrl(dbUrl) {
+  _logger = new LoggerScoped("mysql",logger);
+}
+
+DeviceDBMySQL::~DeviceDBMySQL() {
+  delete _logger;
+}
 
 bool DeviceDBMySQL::initialise() {
   conn = mysql_init(nullptr);
   if (!conn) {
-    _logger.error("MySQL initialization failed.");
+    _logger->error("MySQL initialization failed.");
     return false;
   }
 
@@ -45,14 +52,14 @@ bool DeviceDBMySQL::initialise() {
   if (_dbUrl.user) user = _dbUrl.user.value().c_str();
   if (_dbUrl.password) password = _dbUrl.password.value().c_str();
 
-  _logger.debug("connecting...");
+  _logger->debug("connecting...");
 
   if (!mysql_real_connect(conn, _dbUrl.host.c_str(), user, password, _dbUrl.path.substr(1).c_str(), 0, nullptr, 0)) {
-    _logger.error("Connection failed: " + std::string(mysql_error(conn)));
+    _logger->error("Connection failed: " + std::string(mysql_error(conn)));
     return false;
   }
 
-  _logger.info("Connected");
+  _logger->info("Connected");
 
   return true;
 }
@@ -60,14 +67,14 @@ bool DeviceDBMySQL::initialise() {
 std::shared_ptr<Host> DeviceDBMySQL::get_host(uint64_t host_id) {
   // Do Query
   if (mysql_query(conn, ("SELECT id, name, aes_key FROM host WHERE id = " + std::to_string(host_id)).c_str())) {
-    _logger.error("Query failed: " + std::string(mysql_error(conn)));
+    _logger->error("Query failed: " + std::string(mysql_error(conn)));
     return NULL;
   }
 
   // Get Result
   MYSQL_RES* result = mysql_store_result(conn);
   if (!result) {
-    _logger.error("Query host: Bad Result Set: " + std::string(mysql_error(conn)));
+    _logger->error("Query host: Bad Result Set: " + std::string(mysql_error(conn)));
     return NULL;
   }
 
@@ -75,7 +82,7 @@ std::shared_ptr<Host> DeviceDBMySQL::get_host(uint64_t host_id) {
   int num_fields = mysql_num_fields(result);
 
   if (num_fields != 3) {
-    _logger.error("Query host: Expected 3 fields, got " + std::to_string(num_fields));
+    _logger->error("Query host: Expected 3 fields, got " + std::to_string(num_fields));
     mysql_free_result(result);
     return NULL;
   }
@@ -92,12 +99,12 @@ std::shared_ptr<Host> DeviceDBMySQL::get_host(uint64_t host_id) {
     if (lengths[2] == 32) {  // Ensure the binary data is exactly 32 bytes
       std::memcpy(host->aes_key, row[2], 32);
     } else {
-      _logger.error("AES key length mismatch. Expected 32 bytes.");
+      _logger->error("AES key length mismatch. Expected 32 bytes.");
       mysql_free_result(result);
       return NULL;
     }
   } else {
-    _logger.error("AES key is NULL.");
+    _logger->error("AES key is NULL.");
     mysql_free_result(result);
     return NULL;
   }
@@ -111,12 +118,12 @@ std::shared_ptr<Device> DeviceDBMySQL::get_device(uint64_t device_id) { return N
 std::vector<Device> DeviceDBMySQL::get_host_devices(uint64_t host_id) { return std::vector<Device>(); }
 
 bool DeviceDBMySQL::close() {
-  _logger.debug("closing...");
+  _logger->debug("closing...");
   if (conn) {
     mysql_close(conn);
     conn = nullptr;
   }
-  _logger.info("Closed");
+  _logger->info("Closed");
   return true;
 }
 

@@ -20,23 +20,35 @@
 //
 
 #include "config.h"
+#include "logger_scoped.h"
 
 namespace po = boost::program_options;
 
 namespace netdisk {
 
-Config::Config(Logger& logger) : _logger(logger) {}
+Config::Config(Logger *logger) {
+  _logger = new LoggerScoped("config",logger);
+}
 
-Config::Config(Logger& logger, int argc, char* argv[]) : _logger(logger) { parse_cmd_line(argc, argv); }
+Config::Config(Logger *logger, int argc, char* argv[]) {
+  _logger = new LoggerScoped("config",logger);
+  parse_cmd_line(argc, argv);
+}
+
+Config::~Config() {
+  delete _logger;
+}
 
 void Config::parse_cmd_line(int argc, char* argv[]) {
-  _logger.debug("Parsing command line...");
+  _logger->debug("Parsing command line...");
   _valid = true;
 
   try {
     po::options_description desc("Allowed options");
-    desc.add_options()("help,h", "Help")("db_mode", "Device Database Mode (file, mysql, postgresql)")(
-        "db_url", po::value<std::string>(), "A Database URL (mysql://user:password@host/database, etc)");
+    desc.add_options()
+      ("help,h", "Help")
+      ("db_mode", "Device Database Mode (file, mysql, postgresql)")
+      ("db_url", po::value<std::string>(), "A Database URL (mysql://user:password@host/database, etc)");
 
     po::variables_map vm;
 
@@ -59,22 +71,22 @@ void Config::parse_cmd_line(int argc, char* argv[]) {
       dbUrl.parse(vm["db_url"].as<std::string>());
 
       if (dbUrl.is_valid()) {
-        _logger.debug("db_url.scheme = " + dbUrl.scheme);
+        _logger->debug("db_url.scheme = " + dbUrl.scheme);
         if (dbUrl.user) {
-          _logger.debug("db_url.user = " + dbUrl.user.value());
+          _logger->debug("db_url.user = " + dbUrl.user.value());
         }
         if (dbUrl.password) {
-          _logger.debug("db_url.password = " + dbUrl.password.value());
+          _logger->debug("db_url.password = " + dbUrl.password.value());
         }
-        _logger.debug("db_url.host = " + dbUrl.host);
+        _logger->debug("db_url.host = " + dbUrl.host);
         if (dbUrl.port) {
-          _logger.debug("db_url.port = " + std::to_string(dbUrl.port.value()));
+          _logger->debug("db_url.port = " + std::to_string(dbUrl.port.value()));
         }
-        _logger.debug("db_url.path = " + dbUrl.path);
-        _logger.debug("db_url.query = " + dbUrl.query);
-        _logger.debug("db_url.fragment = " + dbUrl.fragment);
+        _logger->debug("db_url.path = " + dbUrl.path);
+        _logger->debug("db_url.query = " + dbUrl.query);
+        _logger->debug("db_url.fragment = " + dbUrl.fragment);
       } else {
-        _logger.warn("db_url is not a valid URL");
+        _logger->warn("db_url is not a valid URL");
         _valid = false;
       }
     }
@@ -84,15 +96,15 @@ void Config::parse_cmd_line(int argc, char* argv[]) {
 
     // Handle or display unrecognized options
     if (!unrecognized_opts.empty()) {
-      _logger.error("Unrecognized options:");
+      _logger->error("Unrecognized options:");
       for (const auto& opt : unrecognized_opts) {
-        _logger.error(opt);
+        _logger->error(opt);
       }
       _valid = false;
     }
 
   } catch (const po::error& e) {
-    _logger.error("Error: " + std::string(e.what()));
+    _logger->error("Error: " + std::string(e.what()));
     _valid = false;
   }
 }

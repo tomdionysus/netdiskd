@@ -38,29 +38,25 @@ using namespace netdisk;
 int main(int argc, char* argv[]) {
   LoggerStdIO mainLogger(LogLevel::DEBUG);
 
-  LoggerScoped configLogger("config", &mainLogger);
-  LoggerScoped serverLogger("server", &mainLogger);
-  LoggerScoped devicedbLogger("devicedb", &mainLogger);
-
   mainLogger.info("-----------------------------------");
   mainLogger.info("netdiskd v" + Version::getVersionString());
   mainLogger.info("-----------------------------------");
 
-  Config config(configLogger, argc, argv);
+  Config config(&mainLogger, argc, argv);
 
   if (!config.is_valid()) {
     mainLogger.error("Invalid Configuration");
     return 99;
   }
 
-  DeviceDBMySQL ddMysql(devicedbLogger, config.dbUrl);
+  DeviceDBMySQL ddMysql(&mainLogger, config.dbUrl);
   DeviceDB& deviceDb = ddMysql;
 
   // Create the device database
   deviceDb.initialise();
 
   // Create the TcpServer instance with the logger and start it on the specified port
-  TcpServer server(serverLogger, 26547);
+  TcpServer server(&mainLogger, 26547);
 
   // Wait for SIGINT
   boost::asio::io_context signal_wait_context;

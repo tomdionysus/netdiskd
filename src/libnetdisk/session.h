@@ -20,33 +20,27 @@
 //
 #pragma once
 
-#include <mysql/mysql.h>
-
-#include <iostream>
-#include <string>
-#include <vector>
-
-#include "device_db.h"
-#include "logger.h"
-#include "url.h"
+#include <cstdint>
+#include <fstream>
+#include <thread>
+#include <atomic>
 
 namespace netdisk {
 
-class DeviceDBMySQL : public DeviceDB {
- public:
-  DeviceDBMySQL(Logger *logger, URL& dbUrl);
-  ~DeviceDBMySQL();
+class Session {
+  public:
+    Session();
+    ~Session();
 
-  virtual bool initialise();
-  virtual std::shared_ptr<Host> get_host(uint64_t host_id);
-  virtual std::shared_ptr<Device> get_device(uint64_t device_id);
-  virtual std::vector<Device> get_host_devices(uint64_t host_id);
-  virtual bool close();
+    void initialise();
+    void start();
+    void stop();
 
  private:
-  Logger *_logger;
-  URL _dbUrl;
-  struct MYSQL* conn = nullptr;
+    std::thread *_thread;
+    std::atomic<bool> _running;
+
+    void _execute(int id);
 };
 
 }  // namespace netdisk

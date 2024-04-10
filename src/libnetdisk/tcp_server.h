@@ -32,7 +32,8 @@ namespace netdisk {
 
 class TcpServer {
  public:
-  TcpServer(Logger& logger, short port);
+  TcpServer(Logger *logger, short port);
+  ~TcpServer();
 
   void start();
   void stop();
@@ -48,7 +49,7 @@ class TcpServer {
   uint16_t _port;
   std::thread _thread;
 
-  Logger& _logger;
+  Logger *_logger;
 };
 
 }  // namespace netdisk

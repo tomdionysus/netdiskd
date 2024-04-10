@@ -18,35 +18,53 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 // 02110-1301, USA.
 //
-#pragma once
-
-#include <mysql/mysql.h>
+#include "session.h"
 
 #include <iostream>
-#include <string>
-#include <vector>
-
-#include "device_db.h"
-#include "logger.h"
-#include "url.h"
+#include <functional>
 
 namespace netdisk {
 
-class DeviceDBMySQL : public DeviceDB {
- public:
-  DeviceDBMySQL(Logger *logger, URL& dbUrl);
-  ~DeviceDBMySQL();
+Session::Session() {
+  _running = false;
+  _thread = nullptr;
+}
 
-  virtual bool initialise();
-  virtual std::shared_ptr<Host> get_host(uint64_t host_id);
-  virtual std::shared_ptr<Device> get_device(uint64_t device_id);
-  virtual std::vector<Device> get_host_devices(uint64_t host_id);
-  virtual bool close();
+Session::~Session() {
 
- private:
-  Logger *_logger;
-  URL _dbUrl;
-  struct MYSQL* conn = nullptr;
-};
+}
+
+void Session::initialise() {
+
+}
+
+void Session::start() {
+  if(!_running) {
+    _thread = new std::thread(std::bind(&Session::_execute, this, 0));
+  }
+}
+
+void Session::stop() {
+  if(_running) {
+    // Signal Thread
+    _running = false;
+    
+    // Wait for quit
+    if(_thread->joinable()) {
+      _thread->join();
+    }
+  }
+}
+
+void Session::_execute(int id) {
+  _running = true;
+
+  while(_running) {
+
+  }
+
+  _thread = nullptr;
+}
+
 
 }  // namespace netdisk
