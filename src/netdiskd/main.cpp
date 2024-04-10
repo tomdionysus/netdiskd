@@ -36,27 +36,27 @@ using namespace std;
 using namespace netdisk;
 
 int main(int argc, char* argv[]) {
-  LoggerStdIO mainLogger(LogLevel::DEBUG);
+  auto mainLogger = std::make_shared<LoggerStdIO>(LogLevel::DEBUG);
 
-  mainLogger.info("-----------------------------------");
-  mainLogger.info("netdiskd v" + Version::getVersionString());
-  mainLogger.info("-----------------------------------");
+  mainLogger->info("-----------------------------------");
+  mainLogger->info("netdiskd v" + Version::getVersionString());
+  mainLogger->info("-----------------------------------");
 
-  Config config(&mainLogger, argc, argv);
+  Config config(mainLogger, argc, argv);
 
   if (!config.is_valid()) {
-    mainLogger.error("Invalid Configuration");
+    mainLogger->error("Invalid Configuration");
     return 99;
   }
 
-  DeviceDBMySQL ddMysql(&mainLogger, config.dbUrl);
+  DeviceDBMySQL ddMysql(mainLogger, config.dbUrl);
   DeviceDB& deviceDb = ddMysql;
 
   // Create the device database
   deviceDb.initialise();
 
   // Create the TcpServer instance with the logger and start it on the specified port
-  TcpServer server(&mainLogger, 26547);
+  TcpServer server(mainLogger, 26547);
 
   // Wait for SIGINT
   boost::asio::io_context signal_wait_context;
@@ -64,9 +64,8 @@ int main(int argc, char* argv[]) {
 
   signals.async_wait([&](const boost::system::error_code& error, int signal_number) {
     if (!error) {
-      mainLogger.debug("SIGINT received");
+      mainLogger->debug("SIGINT received");
       server.stop();
-      deviceDb.close();
     }
   });
 
@@ -75,9 +74,9 @@ int main(int argc, char* argv[]) {
 
   auto host = deviceDb.get_host(27838123);
   if (host == nullptr) {
-    mainLogger.info("Host not found");
+    mainLogger->info("Host not found");
   } else {
-    mainLogger.info("Host ID: " + std::to_string(host->id) + ", Name: '" + host->name + "', AES Key: 0x" + Util::to_hex(host->aes_key, AES_KEY_SIZE));
+    mainLogger->info("Host ID: " + std::to_string(host->id) + ", Name: '" + host->name + "', AES Key: 0x" + Util::to_hex(host->aes_key, AES_KEY_SIZE));
   }
 
   // Do the SIGINT Wait

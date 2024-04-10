@@ -33,15 +33,15 @@ namespace netdisk {
 
 class Session {
  public:
-  Session(Logger *logger, std::shared_ptr<boost::asio::ip::tcp::socket> connection);
+  Session(std::shared_ptr<Logger> logger, std::shared_ptr<boost::asio::ip::tcp::socket> connection);
   ~Session();
 
   void stop();
 
  private:
-  Logger *_logger;
+  std::unique_ptr<Logger> _logger;
 
-  std::thread *_thread;
+  std::unique_ptr<std::thread> _thread;
   std::atomic<bool> _running;
 
   std::shared_ptr<boost::asio::ip::tcp::socket> _connection;

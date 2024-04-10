@@ -27,26 +27,32 @@
 
 namespace netdisk {
 
-TcpServer::TcpServer(Logger* logger, short port) : _port(port), _acceptor(_io_context, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)) {
-  _logger = new LoggerScoped("server", logger);
+TcpServer::TcpServer(std::shared_ptr<Logger> logger, short port)
+    : _port(port),
+      _acceptor(_io_context, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)),
+      _logger(std::make_shared<LoggerScoped>("server", logger)) {
   start_accept();
 }
 
-TcpServer::~TcpServer() { delete _logger; }
+TcpServer::~TcpServer() { stop(); }
 
 void TcpServer::start() {
   _logger->debug("Starting...");
-  _thread = std::thread([this]() { _io_context.run(); });
+  _thread = std::make_shared<std::thread>([this]() { _io_context.run(); });
   _logger->info("Listening on TCP " + std::to_string(_port));
 }
 
 void TcpServer::stop() {
-  _logger->debug("Stopping...");
-  _io_context.stop();
-  if (_thread.joinable()) {
-    _thread.join();
+  if (_thread) {
+    _logger->debug("Stopping...");
+    _io_context.stop();
+
+    if (_thread->joinable()) {
+      _thread->join();
+      _thread.reset();
+    }
+    _logger->info("Stopped");
   }
-  _logger->info("Stopped");
 }
 
 void TcpServer::start_accept() {

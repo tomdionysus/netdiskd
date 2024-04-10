@@ -28,7 +28,7 @@ namespace netdisk {
 
 class LoggerScoped : public Logger {
  public:
-  LoggerScoped(std::string scope, Logger* logger);
+  LoggerScoped(std::string scope, std::shared_ptr<Logger> logger);
 
   virtual void debug(std::string log);
   virtual void info(std::string log);
@@ -37,7 +37,7 @@ class LoggerScoped : public Logger {
 
  private:
   std::string _scope;
-  Logger* _logger;
+  std::shared_ptr<Logger> _logger;
 };
 
 }  // namespace netdisk

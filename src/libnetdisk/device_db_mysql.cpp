@@ -31,9 +31,9 @@
 
 namespace netdisk {
 
-DeviceDBMySQL::DeviceDBMySQL(Logger* logger, URL& dbUrl) : _dbUrl(dbUrl) { _logger = new LoggerScoped("mysql", logger); }
+DeviceDBMySQL::DeviceDBMySQL(std::shared_ptr<Logger> logger, URL& dbUrl) : _dbUrl(dbUrl), _logger(std::make_unique<LoggerScoped>("mysql", logger)) {}
 
-DeviceDBMySQL::~DeviceDBMySQL() { delete _logger; }
+DeviceDBMySQL::~DeviceDBMySQL() { close(); }
 
 bool DeviceDBMySQL::initialise() {
   conn = mysql_init(nullptr);

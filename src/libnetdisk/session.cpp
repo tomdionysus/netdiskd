@@ -27,20 +27,14 @@
 
 namespace netdisk {
 
-Session::Session(Logger *logger, std::shared_ptr<boost::asio::ip::tcp::socket> connection) {
-  _running = false;
-  _thread = nullptr;
-  _connection = connection;
-  auto endpoint = _connection->remote_endpoint();
-  _logger = new LoggerScoped(endpoint.address().to_string() + ":" + std::to_string(endpoint.port()), logger);
+Session::Session(std::shared_ptr<Logger> logger, std::shared_ptr<boost::asio::ip::tcp::socket> connection)
+    : _connection(connection),
+      _logger(std::make_unique<LoggerScoped>(connection->remote_endpoint().address().to_string() + ":" + std::to_string(connection->remote_endpoint().port()),
+                                             logger)),
+      _running(false),
+      _thread(std::make_unique<std::thread>(std::bind(&Session::_execute, this, 0))) {}
 
-  _thread = new std::thread(std::bind(&Session::_execute, this, 0));
-}
-
-Session::~Session() {
-  stop();
-  delete _logger;
-}
+Session::~Session() { stop(); }
 
 void Session::stop() {
   if (_running) {
@@ -78,8 +72,6 @@ void Session::_execute(int id) {
   _logger->info("Closed");
 
   _connection->close();
-
-  _thread = nullptr;
 }
 
 boost::system::error_code Session::_read_with_timeout() {

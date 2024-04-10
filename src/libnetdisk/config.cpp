@@ -27,14 +27,11 @@ namespace po = boost::program_options;
 
 namespace netdisk {
 
-Config::Config(Logger* logger) { _logger = new LoggerScoped("config", logger); }
+Config::Config(std::shared_ptr<Logger> logger) : _logger(std::make_unique<LoggerScoped>("config", logger)) {}
 
-Config::Config(Logger* logger, int argc, char* argv[]) {
-  _logger = new LoggerScoped("config", logger);
+Config::Config(std::shared_ptr<Logger> logger, int argc, char* argv[]) : _logger(std::make_unique<LoggerScoped>("config", logger)) {
   parse_cmd_line(argc, argv);
 }
-
-Config::~Config() { delete _logger; }
 
 void Config::parse_cmd_line(int argc, char* argv[]) {
   _logger->debug("Parsing command line...");

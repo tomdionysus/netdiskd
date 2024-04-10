@@ -24,7 +24,7 @@
 
 namespace netdisk {
 
-LoggerScoped::LoggerScoped(std::string scope, Logger *logger) : _scope(scope), _logger(logger) {}
+LoggerScoped::LoggerScoped(std::string scope, std::shared_ptr<Logger> logger) : _scope(scope), _logger(logger) {}
 
 void LoggerScoped::debug(std::string str) { _logger->debug("(" + _scope + ") " + str); }
 
