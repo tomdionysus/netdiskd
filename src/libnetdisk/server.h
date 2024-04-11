@@ -20,38 +20,14 @@
 //
 #pragma once
 
-#include <boost/asio.hpp>
-#include <boost/bind/bind.hpp>
-#include <memory>
-#include <thread>
-#include <unordered_map>
-
 #include "logger.h"
-#include "server.h"
-#include "tcp_session.h"
 
 namespace netdisk {
 
-class TCPServer : public Server {
+class Server {
  public:
-  TCPServer(std::shared_ptr<Logger> logger, short port);
-  ~TCPServer();
-
-  virtual void start();
-  virtual void stop();
-
- private:
-  void _handle_accept(const boost::system::error_code &error, std::shared_ptr<boost::asio::ip::tcp::socket> new_connection);
-  void start_accept();
-
-  boost::asio::io_context _io_context;
-  boost::asio::ip::tcp::acceptor _acceptor;
-  std::unordered_map<int, std::shared_ptr<TCPSession>> _connections;
-  int next_connection_id_ = 0;
-  uint16_t _port;
-  std::shared_ptr<std::thread> _thread;
-
-  std::shared_ptr<Logger> _logger;
+  virtual void start() = 0;
+  virtual void stop() = 0;
 };
 
 }  // namespace netdisk

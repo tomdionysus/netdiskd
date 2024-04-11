@@ -27,22 +27,22 @@
 
 namespace netdisk {
 
-TcpServer::TcpServer(std::shared_ptr<Logger> logger, short port)
+TCPServer::TCPServer(std::shared_ptr<Logger> logger, short port)
     : _port(port),
       _acceptor(_io_context, boost::asio::ip::tcp::endpoint(boost::asio::ip::tcp::v4(), port)),
       _logger(std::make_shared<LoggerScoped>("server", logger)) {
   start_accept();
 }
 
-TcpServer::~TcpServer() { stop(); }
+TCPServer::~TCPServer() { stop(); }
 
-void TcpServer::start() {
+void TCPServer::start() {
   _logger->debug("Starting...");
   _thread = std::make_shared<std::thread>([this]() { _io_context.run(); });
   _logger->info("Listening on TCP " + std::to_string(_port));
 }
 
-void TcpServer::stop() {
+void TCPServer::stop() {
   if (_thread) {
     _logger->debug("Stopping...");
     _io_context.stop();
@@ -55,13 +55,13 @@ void TcpServer::stop() {
   }
 }
 
-void TcpServer::start_accept() {
+void TCPServer::start_accept() {
   auto new_connection = std::make_shared<boost::asio::ip::tcp::socket>(_io_context);
 
-  _acceptor.async_accept(*new_connection, boost::bind(&TcpServer::_handle_accept, this, boost::asio::placeholders::error, new_connection));
+  _acceptor.async_accept(*new_connection, boost::bind(&TCPServer::_handle_accept, this, boost::asio::placeholders::error, new_connection));
 }
 
-void TcpServer::_handle_accept(const boost::system::error_code& error, std::shared_ptr<boost::asio::ip::tcp::socket> new_connection) {
+void TCPServer::_handle_accept(const boost::system::error_code& error, std::shared_ptr<boost::asio::ip::tcp::socket> new_connection) {
   if (!error) {
     // Add the new connection to the map
     int id = next_connection_id_++;

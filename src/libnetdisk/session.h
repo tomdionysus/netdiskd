@@ -20,15 +20,6 @@
 //
 #pragma once
 
-#include <atomic>
-#include <boost/asio.hpp>
-#include <boost/bind/bind.hpp>
-#include <cstdint>
-#include <fstream>
-#include <thread>
-
-#include "logger.h"
-
 namespace netdisk {
 
 class Session {

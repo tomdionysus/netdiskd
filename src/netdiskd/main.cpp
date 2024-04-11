@@ -59,7 +59,8 @@ int main(int argc, char* argv[]) {
   deviceDb.initialise();
 
   // Create the TcpServer instance with the logger and start it on the specified port
-  TcpServer server(mainLogger, 26547);
+  TCPServer tcpServer(mainLogger, 26547);
+  Server& server = tcpServer;
 
   // Wait for SIGINT
   boost::asio::io_context signal_wait_context;

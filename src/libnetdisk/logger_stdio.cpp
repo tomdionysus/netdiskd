@@ -53,11 +53,8 @@ void LoggerStdIO::error(std::string log) {
 }
 
 std::string LoggerStdIO::_getDateTime() {
-  // Get current time as time_point
   auto now = std::chrono::system_clock::now();
-  // Convert to a time_t
   auto now_c = std::chrono::system_clock::to_time_t(now);
-  // Convert to tm struct in UTC
   std::tm now_tm = *std::gmtime(&now_c);
 
   std::ostringstream oss;
