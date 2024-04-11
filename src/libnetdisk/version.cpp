@@ -25,24 +25,59 @@
 
 namespace netdisk {
 
-netdisk_version_t Version::getVersion() {
-  netdisk_version_t thisVersion;
-  thisVersion.major = NETDISK_MAJOR_VERSION;
-  thisVersion.minor = NETDISK_MINOR_VERSION;
-  thisVersion.patch = NETDISK_PATCH_VERSION;
-
-  return thisVersion;
+Version::Version(uint8_t* ptr, size_t len) : major(0), minor(0), patch(0) {
+  if (len > 0) major = ptr[0];
+  if (len > 1) minor = ptr[1];
+  if (len > 2) patch = ptr[2];
 }
 
-std::string Version::getVersionString() {
-  netdisk_version_t thisVersion = Version::getVersion();
-  return Version::getVersionString(thisVersion);
+Version::Version(const std::string& versionString) : major(0), minor(0), patch(0) {
+  std::istringstream iss(versionString);
+  std::string token;
+  int numTokens = 0;
+
+  while (std::getline(iss, token, '.') && numTokens < 3) {
+    int num = std::stoi(token);
+    if (num < 0 || num > 255) {
+      throw std::runtime_error("Version number out of range (0-255)");
+    }
+    switch (numTokens) {
+      case 0:
+        major = num;
+        break;
+      case 1:
+        minor = num;
+        break;
+      case 2:
+        patch = num;
+        break;
+    }
+    ++numTokens;
+  }
 }
 
-std::string Version::getVersionString(netdisk_version_t version) {
+Version::Version(uint8_t pmajor, uint8_t pminor, uint8_t ppatch) {
+  major = pmajor;
+  minor = pminor;
+  patch = ppatch;
+}
+
+size_t Version::pack(uint8_t* ptr) {
+  ptr[0] = major;
+  ptr[1] = minor;
+  ptr[2] = patch;
+  return 3;
+}
+
+std::string Version::to_string() {
   std::ostringstream versionString;
-  versionString << (uint32_t)version.major << "." << (uint32_t)version.minor << "." << (uint32_t)version.patch;
+  versionString << (uint32_t)major << "." << (uint32_t)minor << "." << (uint32_t)patch;
   return versionString.str();
+}
+
+std::ostream& operator<<(std::ostream& os, const Version& v) {
+  os << (uint32_t)v.major << "." << (uint32_t)v.minor << "." << (uint32_t)v.patch;
+  return os;
 }
 
 }  // namespace netdisk

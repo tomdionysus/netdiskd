@@ -47,7 +47,7 @@ class Session {
   std::shared_ptr<boost::asio::ip::tcp::socket> _connection;
 
   void _execute(int id);
-  boost::system::error_code _read_with_timeout();
+  ssize_t _read_with_timeout(void* ptr, size_t len, uint32_t timeout_ms, boost::system::error_code& ec);
 };
 
 }  // namespace netdisk

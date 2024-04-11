@@ -21,7 +21,8 @@
 #pragma once
 
 #include <cstdint>
-#include <fstream>
+#include <mutex>
+#include <vector>
 
 namespace netdisk {
 
@@ -30,14 +31,20 @@ class Random {
   Random();
   ~Random();
 
-  int8_t getInt8();
-  int16_t getInt16();
-  int32_t getInt32();
-  int64_t getInt64();
-  void getRandom(void* ptr, size_t size);
+  void initialize();
+  int8_t get_int8();
+  int16_t get_int16();
+  int32_t get_int32();
+  int64_t get_int64();
+  void get_random(void* ptr, size_t size);
 
  private:
-  std::ifstream randFile;
+  std::vector<char> buffer;
+  size_t buffer_index;
+  std::mutex mtx;
+
+  void reset_buffer();
+  void refill_buffer(size_t size, void* ptr);
 };
 
 }  // namespace netdisk

@@ -38,8 +38,11 @@ using namespace netdisk;
 int main(int argc, char* argv[]) {
   auto mainLogger = std::make_shared<LoggerStdIO>(LogLevel::DEBUG);
 
+  // This is v0.1.0
+  Version version(0, 1, 0);
+
   mainLogger->info("-----------------------------------");
-  mainLogger->info("netdiskd v" + Version::getVersionString());
+  mainLogger->info("netdiskd v" + version.to_string());
   mainLogger->info("-----------------------------------");
 
   Config config(mainLogger, argc, argv);

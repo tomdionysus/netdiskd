@@ -20,54 +20,85 @@
 //
 #include "random.h"
 
+#include <cstring>  // For memcpy
+#include <fstream>
 #include <iostream>
+#include <mutex>
 
 namespace netdisk {
 
-Random::Random() {
-  randFile.open("/dev/random", std::ios::in | std::ios::binary);
+Random::Random() : buffer(1024 * 1024, 0), buffer_index(0) {
+  std::lock_guard<std::mutex> lock(mtx);
+  initialize();  // Automatically initialize on construction
+}
+
+Random::~Random() {}
+
+void Random::initialize() { reset_buffer(); }
+
+void Random::reset_buffer() {
+  refill_buffer(buffer.size(), buffer.data());
+  buffer_index = 0;
+}
+
+void Random::get_random(void* ptr, size_t size) {
+  std::lock_guard<std::mutex> lock(mtx);
+  if (size <= buffer.size() - buffer_index) {
+    // There is enough data left in the buffer, use it
+    memcpy(ptr, &buffer[buffer_index], size);
+    buffer_index += size;
+  } else {
+    // Not enough data left in the buffer, read directly from /dev/urandom
+    refill_buffer(size, ptr);
+  }
+}
+
+void Random::refill_buffer(size_t size, void* ptr) {
+  std::ifstream randFile("/dev/urandom", std::ios::in | std::ios::binary);
   if (!randFile) {
-    std::cerr << "Cannot open /dev/random" << std::endl;
-    throw std::runtime_error("Failed to open /dev/random");
+    std::cerr << "Cannot open /dev/urandom" << std::endl;
+    throw std::runtime_error("Failed to open /dev/urandom");
   }
-}
 
-Random::~Random() {
-  if (randFile.is_open()) {
-    randFile.close();
-  }
-}
-
-int8_t Random::getInt8() {
-  int8_t value;
-  getRandom(&value, sizeof(value));
-  return value;
-}
-
-int16_t Random::getInt16() {
-  int16_t value;
-  getRandom(&value, sizeof(value));
-  return value;
-}
-
-int32_t Random::getInt32() {
-  int32_t value;
-  getRandom(&value, sizeof(value));
-  return value;
-}
-
-int64_t Random::getInt64() {
-  int64_t value;
-  getRandom(&value, sizeof(value));
-  return value;
-}
-
-void Random::getRandom(void* ptr, size_t size) {
+  // Read directly into the buffer or provided pointer
   randFile.read(static_cast<char*>(ptr), size);
   if (!randFile) {
-    std::cerr << "Error reading from /dev/random" << std::endl;
-    throw std::runtime_error("Failed to read from /dev/random");
+    std::cerr << "Error reading from /dev/urandom" << std::endl;
+    throw std::runtime_error("Failed to read from /dev/urandom");
   }
+  randFile.close();
+}
+
+int8_t Random::get_int8() {
+  std::lock_guard<std::mutex> lock(mtx);
+  if (buffer_index + sizeof(int8_t) > buffer.size()) reset_buffer();
+  int8_t result = *reinterpret_cast<int8_t*>(&buffer[buffer_index]);
+  buffer_index += sizeof(int8_t);
+  return result;
+}
+
+int16_t Random::get_int16() {
+  std::lock_guard<std::mutex> lock(mtx);
+  if (buffer_index + sizeof(int16_t) > buffer.size()) reset_buffer();
+  int16_t result = *reinterpret_cast<int16_t*>(&buffer[buffer_index]);
+  buffer_index += sizeof(int16_t);
+  return result;
+}
+
+int32_t Random::get_int32() {
+  std::lock_guard<std::mutex> lock(mtx);
+  if (buffer_index + sizeof(int32_t) > buffer.size()) reset_buffer();
+  int32_t result = *reinterpret_cast<int32_t*>(&buffer[buffer_index]);
+  buffer_index += sizeof(int32_t);
+  return result;
+}
+
+int64_t Random::get_int64() {
+  std::lock_guard<std::mutex> lock(mtx);
+  if (buffer_index + sizeof(int64_t) > buffer.size()) reset_buffer();
+  int64_t result = *reinterpret_cast<int64_t*>(&buffer[buffer_index]);
+  buffer_index += sizeof(int64_t);
+  return result;
 }
 
 }  // namespace netdisk

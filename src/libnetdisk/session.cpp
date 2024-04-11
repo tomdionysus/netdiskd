@@ -53,19 +53,24 @@ void Session::_execute(int id) {
 
   _logger->info("Connected");
 
+  char buffer[65535];
   boost::system::error_code ec;
 
   while (_running) {
-    ec = _read_with_timeout();
+    ssize_t len = _read_with_timeout(buffer, 65535, 10, ec);
 
     if (ec) {
       if (ec == boost::asio::error::operation_aborted) {
+        // Timed out, normal operation
+      } else if (ec == boost::asio::error::eof) {
+        _logger->info("Remote Closed Connection");
         _running = false;
       } else {
+        _logger->error("Closing (Error during read: " + ec.what() + ")");
         _running = false;
       }
     } else {
-      _logger->info("Read Bytes");
+      _logger->debug("Read " + std::to_string(len) + " bytes");
     }
   }
 
@@ -74,22 +79,22 @@ void Session::_execute(int id) {
   _connection->close();
 }
 
-boost::system::error_code Session::_read_with_timeout() {
-  boost::asio::steady_timer timer(_connection->get_executor(), boost::asio::chrono::seconds(10));
-  boost::system::error_code ec;
+ssize_t Session::_read_with_timeout(void *ptr, size_t len, uint32_t timeout_ms, boost::system::error_code &ec) {
+  if (!ptr || len == 0) return -1;  // Validate input parameters
+
+  boost::asio::steady_timer timer(_connection->get_executor(), boost::asio::chrono::milliseconds(timeout_ms));
 
   timer.async_wait([this](const boost::system::error_code &) {
     _connection->cancel();  // This will cancel the blocking read operation
   });
 
-  // Buffer to store data
-  char data[1024];
-  size_t length = _connection->read_some(boost::asio::buffer(data), ec);
+  // Directly use the provided buffer and length
+  size_t length = _connection->read_some(boost::asio::buffer(ptr, len), ec);
 
   // Cancel the timer if the operation completes before the timeout
   timer.cancel();
 
-  return ec;
+  return static_cast<ssize_t>(length);  // Successfully read 'length' bytes
 }
 
 }  // namespace netdisk

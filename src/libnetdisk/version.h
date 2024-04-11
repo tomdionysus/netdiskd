@@ -26,21 +26,21 @@
 
 namespace netdisk {
 
-#define NETDISK_MAJOR_VERSION 0
-#define NETDISK_MINOR_VERSION 1
-#define NETDISK_PATCH_VERSION 0
+class Version {
+ public:
+  Version(uint8_t* ptr, size_t len);
+  Version(const std::string& version);
+  Version(uint8_t major, uint8_t minor, uint8_t patch);
 
-typedef struct netdisk_version {
+  size_t pack(uint8_t* ptr);
+  std::string to_string();
+
+  friend std::ostream& operator<<(std::ostream& os, const Version& v);
+
+ private:
   uint8_t major;
   uint8_t minor;
   uint8_t patch;
-} netdisk_version_t;
-
-class Version {
- public:
-  static netdisk_version_t getVersion();
-  static std::string getVersionString();
-  static std::string getVersionString(netdisk_version_t version);
 };
 
 }  // namespace netdisk

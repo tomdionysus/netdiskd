@@ -38,9 +38,15 @@ void Config::parse_cmd_line(int argc, char* argv[]) {
   _valid = true;
 
   try {
+    // clang-format off
+    
     po::options_description desc("Allowed options");
-    desc.add_options()("help,h", "Help")("db_mode", "Device Database Mode (file, mysql, postgresql)")(
-        "db_url", po::value<std::string>(), "A Database URL (mysql://user:password@host/database, etc)");
+    desc.add_options()
+      ("help,h", "Help")
+      ("db_mode", po::value<std::string>(), "Device Database Mode (file, mysql, postgresql)")
+      ("db_url", po::value<std::string>(), "A Database URL (mysql://user:password@host/database, etc)");
+
+    // clang-format on
 
     po::variables_map vm;
 
@@ -88,9 +94,8 @@ void Config::parse_cmd_line(int argc, char* argv[]) {
 
     // Handle or display unrecognized options
     if (!unrecognized_opts.empty()) {
-      _logger->error("Unrecognized options:");
       for (const auto& opt : unrecognized_opts) {
-        _logger->error(opt);
+        _logger->error("Unknown: " + opt);
       }
       _valid = false;
     }
