@@ -32,7 +32,8 @@ Session::Session(std::shared_ptr<Logger> logger, std::shared_ptr<boost::asio::ip
       _logger(std::make_unique<LoggerScoped>(connection->remote_endpoint().address().to_string() + ":" + std::to_string(connection->remote_endpoint().port()),
                                              logger)),
       _running(false),
-      _thread(std::make_unique<std::thread>(std::bind(&Session::_execute, this, 0))) {}
+      _thread(std::make_unique<std::thread>(std::bind(&Session::_execute, this, 0))),
+      _rx_timer(_rx_wait_context, boost::asio::chrono::seconds(10)) {}
 
 Session::~Session() { stop(); }
 
@@ -41,13 +42,14 @@ void Session::stop() {
     // Signal Thread
     _running = false;
 
-    // Cancel any current op on connection
-    _connection->cancel();
+    // Cancel reading
+    _rx_timer.cancel();
+    _connection->close();
+  }
 
-    // Wait for quit
-    if (_thread->joinable()) {
-      _thread->join();
-    }
+  // Wait for thread quit
+  if (_thread->joinable()) {
+    _thread->join();
   }
 }
 
@@ -57,10 +59,11 @@ void Session::_execute(int id) {
   _logger->info("Connected");
 
   char buffer[65535];
-  boost::system::error_code ec;
 
   while (_running) {
-    ssize_t len = _read_with_timeout(buffer, 65535, 1000, ec);
+    boost::system::error_code ec;
+
+    ssize_t len = _read_with_timeout(buffer, 65535, 5000, ec);
 
     if (ec) {
       if (ec == boost::asio::error::operation_aborted) {
@@ -87,28 +90,38 @@ void Session::_execute(int id) {
 ssize_t Session::_read_with_timeout(void *ptr, size_t len, uint32_t timeout_ms, boost::system::error_code &ec) {
   if (!ptr || len == 0) return -1;  // Validate input parameters
 
-  boost::asio::io_context wait_context;
-
   ssize_t rec_len = 0;
 
-  boost::asio::steady_timer timer(wait_context, boost::asio::chrono::milliseconds(timeout_ms));
+  // Set the timeout
+  _rx_timer.expires_after(boost::asio::chrono::milliseconds(timeout_ms));
 
-  timer.async_wait([this](const boost::system::error_code &) {
-    _connection->cancel();  // This will cancel the blocking read operation
-  });
-
+  // Do the async read
   _connection->async_read_some(boost::asio::buffer(ptr, len), [&](const boost::system::error_code &error, std::size_t length) {
-    _logger->debug("..async_read_some done");
     if (!error) {
       rec_len = length;
     } else {
       rec_len = -1;
     }
     ec = error;
-    timer.cancel();
+    _rx_timer.cancel();
   });
 
-  wait_context.run();
+  // Set up the asynchronous wait on the _rx_timer
+  _rx_timer.async_wait([&](const boost::system::error_code &error) {
+    if (error) {
+      if (error == boost::asio::error::operation_aborted) {
+        // Normal operation.
+      }
+
+    } else {
+      _connection->cancel();
+      ec = boost::asio::error::operation_aborted;
+    }
+  });
+
+  // Wait for the timeout, or read to complete
+  _rx_wait_context.run();
+  _rx_wait_context.reset();
 
   return static_cast<ssize_t>(rec_len);  // Successfully read 'length' bytes
 }
