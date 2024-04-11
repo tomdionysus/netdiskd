@@ -31,10 +31,10 @@
 
 namespace netdisk {
 
-class Session {
+class TCPSession {
  public:
-  Session(std::shared_ptr<Logger> logger, std::shared_ptr<boost::asio::ip::tcp::socket> connection);
-  ~Session();
+  TCPSession(std::shared_ptr<Logger> logger, std::shared_ptr<boost::asio::ip::tcp::socket> connection);
+  ~TCPSession();
 
   void stop();
 

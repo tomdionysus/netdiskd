@@ -18,7 +18,7 @@
 // Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
 // 02110-1301, USA.
 //
-#include "session.h"
+#include "tcp_session.h"
 
 #include <functional>
 #include <iostream>
@@ -27,17 +27,17 @@
 
 namespace netdisk {
 
-Session::Session(std::shared_ptr<Logger> logger, std::shared_ptr<boost::asio::ip::tcp::socket> connection)
+TCPSession::TCPSession(std::shared_ptr<Logger> logger, std::shared_ptr<boost::asio::ip::tcp::socket> connection)
     : _connection(connection),
       _logger(std::make_unique<LoggerScoped>(connection->remote_endpoint().address().to_string() + ":" + std::to_string(connection->remote_endpoint().port()),
                                              logger)),
       _running(false),
-      _thread(std::make_unique<std::thread>(std::bind(&Session::_execute, this, 0))),
+      _thread(std::make_unique<std::thread>(std::bind(&TCPSession::_execute, this, 0))),
       _rx_timer(_rx_wait_context, boost::asio::chrono::seconds(10)) {}
 
-Session::~Session() { stop(); }
+TCPSession::~TCPSession() { stop(); }
 
-void Session::stop() {
+void TCPSession::stop() {
   if (_running) {
     // Signal Thread
     _running = false;
@@ -53,7 +53,7 @@ void Session::stop() {
   }
 }
 
-void Session::_execute(int id) {
+void TCPSession::_execute(int id) {
   _running = true;
 
   _logger->info("Connected");
@@ -87,7 +87,7 @@ void Session::_execute(int id) {
   _logger->info("Closed");
 }
 
-ssize_t Session::_read_with_timeout(void *ptr, size_t len, uint32_t timeout_ms, boost::system::error_code &ec) {
+ssize_t TCPSession::_read_with_timeout(void *ptr, size_t len, uint32_t timeout_ms, boost::system::error_code &ec) {
   if (!ptr || len == 0) return -1;  // Validate input parameters
 
   ssize_t rec_len = 0;
