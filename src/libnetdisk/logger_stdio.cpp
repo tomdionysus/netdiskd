@@ -31,20 +31,26 @@ LoggerStdIO::LoggerStdIO(LogLevel log_level) { _log_level = log_level; }
 
 void LoggerStdIO::debug(std::string log) {
   if (_log_level > LogLevel::DEBUG) return;
+  std::lock_guard<std::mutex> lock(mtx);
   std::cout << _getDateTime() << " [DEBUG] " << log << std::endl;
 }
 
 void LoggerStdIO::info(std::string log) {
   if (_log_level > LogLevel::INFO) return;
+  std::lock_guard<std::mutex> lock(mtx);
   std::cout << _getDateTime() << " [INFO ] " << log << std::endl;
 }
 
 void LoggerStdIO::warn(std::string log) {
   if (_log_level > LogLevel::WARN) return;
+  std::lock_guard<std::mutex> lock(mtx);
   std::cout << _getDateTime() << " [WARN ] " << log << std::endl;
 }
 
-void LoggerStdIO::error(std::string log) { std::cout << _getDateTime() << " [ERROR] " << log << std::endl; }
+void LoggerStdIO::error(std::string log) {
+  std::lock_guard<std::mutex> lock(mtx);
+  std::cout << _getDateTime() << " [ERROR] " << log << std::endl;
+}
 
 std::string LoggerStdIO::_getDateTime() {
   // Get current time as time_point

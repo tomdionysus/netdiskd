@@ -38,14 +38,13 @@ void Config::parse_cmd_line(int argc, char* argv[]) {
   _valid = true;
 
   try {
-    // clang-format off
-    
     po::options_description desc("Allowed options");
+
+    // clang-format off
     desc.add_options()
       ("help,h", "Help")
       ("db_mode", po::value<std::string>(), "Device Database Mode (file, mysql, postgresql)")
       ("db_url", po::value<std::string>(), "A Database URL (mysql://user:password@host/database, etc)");
-
     // clang-format on
 
     po::variables_map vm;

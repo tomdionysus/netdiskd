@@ -35,9 +35,9 @@ TCPSession::TCPSession(std::shared_ptr<Logger> logger, std::shared_ptr<boost::as
       _thread(std::make_unique<std::thread>(std::bind(&TCPSession::_execute, this, 0))),
       _rx_timer(_rx_wait_context, boost::asio::chrono::seconds(10)) {}
 
-TCPSession::~TCPSession() { stop(); }
+TCPSession::~TCPSession() { close(); }
 
-void TCPSession::stop() {
+void TCPSession::close() {
   if (_running) {
     // Signal Thread
     _running = false;

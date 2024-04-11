@@ -20,26 +20,20 @@
 //
 #pragma once
 
-#include <mutex>
-#include <string>
+#include <atomic>
+#include <boost/asio.hpp>
+#include <boost/bind/bind.hpp>
+#include <cstdint>
+#include <fstream>
+#include <thread>
 
 #include "logger.h"
 
 namespace netdisk {
 
-class LoggerStdIO : public Logger {
+class Session {
  public:
-  LoggerStdIO(LogLevel log_level);
-
-  virtual void debug(std::string log);
-  virtual void info(std::string log);
-  virtual void warn(std::string log);
-  virtual void error(std::string log);
-
- private:
-  LogLevel _log_level;
-  std::string _getDateTime();
-  std::mutex mtx;
+  virtual void close() = 0;
 };
 
 }  // namespace netdisk

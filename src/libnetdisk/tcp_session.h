@@ -28,15 +28,16 @@
 #include <thread>
 
 #include "logger.h"
+#include "session.h"
 
 namespace netdisk {
 
-class TCPSession {
+class TCPSession : public Session {
  public:
   TCPSession(std::shared_ptr<Logger> logger, std::shared_ptr<boost::asio::ip::tcp::socket> connection);
   ~TCPSession();
 
-  void stop();
+  virtual void close();
 
  private:
   std::unique_ptr<Logger> _logger;
