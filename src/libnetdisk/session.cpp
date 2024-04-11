@@ -41,6 +41,9 @@ void Session::stop() {
     // Signal Thread
     _running = false;
 
+    // Cancel any current op on connection
+    _connection->cancel();
+
     // Wait for quit
     if (_thread->joinable()) {
       _thread->join();
@@ -57,7 +60,7 @@ void Session::_execute(int id) {
   boost::system::error_code ec;
 
   while (_running) {
-    ssize_t len = _read_with_timeout(buffer, 65535, 10, ec);
+    ssize_t len = _read_with_timeout(buffer, 65535, 1000, ec);
 
     if (ec) {
       if (ec == boost::asio::error::operation_aborted) {
@@ -74,27 +77,40 @@ void Session::_execute(int id) {
     }
   }
 
-  _logger->info("Closed");
+  if (_connection->is_open()) {
+    _connection->close();
+  }
 
-  _connection->close();
+  _logger->info("Closed");
 }
 
 ssize_t Session::_read_with_timeout(void *ptr, size_t len, uint32_t timeout_ms, boost::system::error_code &ec) {
   if (!ptr || len == 0) return -1;  // Validate input parameters
 
-  boost::asio::steady_timer timer(_connection->get_executor(), boost::asio::chrono::milliseconds(timeout_ms));
+  boost::asio::io_context wait_context;
+
+  ssize_t rec_len = 0;
+
+  boost::asio::steady_timer timer(wait_context, boost::asio::chrono::milliseconds(timeout_ms));
 
   timer.async_wait([this](const boost::system::error_code &) {
     _connection->cancel();  // This will cancel the blocking read operation
   });
 
-  // Directly use the provided buffer and length
-  size_t length = _connection->read_some(boost::asio::buffer(ptr, len), ec);
+  _connection->async_read_some(boost::asio::buffer(ptr, len), [&](const boost::system::error_code &error, std::size_t length) {
+    _logger->debug("..async_read_some done");
+    if (!error) {
+      rec_len = length;
+    } else {
+      rec_len = -1;
+    }
+    ec = error;
+    timer.cancel();
+  });
 
-  // Cancel the timer if the operation completes before the timeout
-  timer.cancel();
+  wait_context.run();
 
-  return static_cast<ssize_t>(length);  // Successfully read 'length' bytes
+  return static_cast<ssize_t>(rec_len);  // Successfully read 'length' bytes
 }
 
 }  // namespace netdisk

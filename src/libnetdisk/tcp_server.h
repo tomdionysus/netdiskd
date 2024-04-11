@@ -45,7 +45,7 @@ class TcpServer {
 
   boost::asio::io_context _io_context;
   boost::asio::ip::tcp::acceptor _acceptor;
-  std::unordered_map<int, Session *> _connections;
+  std::unordered_map<int, std::shared_ptr<Session>> _connections;
   int next_connection_id_ = 0;
   uint16_t _port;
   std::shared_ptr<std::thread> _thread;

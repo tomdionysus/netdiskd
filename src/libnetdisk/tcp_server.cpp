@@ -66,7 +66,7 @@ void TcpServer::_handle_accept(const boost::system::error_code& error, std::shar
     // Add the new connection to the map
     int id = next_connection_id_++;
 
-    _connections[id] = new Session(_logger, new_connection);
+    _connections[id] = std::make_shared<Session>(_logger, new_connection);
 
     _logger->info("New Connection #" + std::to_string(id) + " (" + new_connection->remote_endpoint().address().to_string() + ")");
 

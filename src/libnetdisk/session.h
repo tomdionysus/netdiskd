@@ -48,6 +48,8 @@ class Session {
 
   void _execute(int id);
   ssize_t _read_with_timeout(void* ptr, size_t len, uint32_t timeout_ms, boost::system::error_code& ec);
+
+  boost::asio::io_context rx_wait_context;
 };
 
 }  // namespace netdisk
